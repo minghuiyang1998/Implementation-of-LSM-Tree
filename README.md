@@ -14,18 +14,19 @@ implement the LSM tree. You can use this as base code or start from scratch.
 To compile, first create a build directory.
 
 
-``bash
+```bash
 mkdir build
 cd build
-``
+```
 
 Afterwards, build using cmake.
 
 
-``bash
+```bash
 cmake ..
+
 cmake --build .
-``
+```
 
 An example executable should be located in the `example` folder. The benchmark
 simply takes in two files, a data file and a workload file and measures the
@@ -41,10 +42,10 @@ By default they have a maximum range of values that can be randomly generated,
 I assume everyone knows some python and can edit the scripts to increase the 
 range if needed. Generate workloads and data with the following syntax
 
-``bash
+```bash
 gen_data.py <rows> <dim_per_value> <folder>
 gen_workload.py <rows> <dim_per_value> <max_key> <folder>
-``
+```
 
 
 ## Contact
