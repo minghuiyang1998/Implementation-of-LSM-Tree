@@ -47,6 +47,21 @@ gen_data.py <rows> <dim_per_value> <folder>
 gen_workload.py <rows> <dim_per_value> <max_key> <folder>
 ```
 
+Data is generated with commas separating each item
+
+Number of Keys | Dimensions of each Object
+Key 1 | Value 1
+Key 2 | Value 2
+... | ...
+Key N | Value N
+
+While workloads follow the format of 
+
+```
+OPERATOR,KEY,ARGS
+```
+
+with the first line being the number of total operations.
 
 ## Contact
 
