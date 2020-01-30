@@ -24,7 +24,6 @@ Afterwards, build using cmake.
 
 ```bash
 cmake ..
-
 cmake --build .
 ```
 
