@@ -1,0 +1,2 @@
+add_executable(simple_benchmark simple_benchmark.cpp)
+target_link_libraries(simple_benchmark PUBLIC templatedb)
