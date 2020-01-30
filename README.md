@@ -50,6 +50,7 @@ gen_workload.py <rows> <dim_per_value> <max_key> <folder>
 Data is generated with commas separating each item
 
 Number of Keys | Dimensions of each Object
+---------------|--------------------------
 Key 1 | Value 1
 Key 2 | Value 2
 ... | ...
