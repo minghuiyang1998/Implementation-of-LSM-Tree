@@ -34,5 +34,6 @@ public:
     static std::vector<Operation> ops_from_file(std::string file_name);
 };
 
-}
+}   // namespace templatedb
+
 #endif /* _TEMPLATEDB_OPERATION_H_ */

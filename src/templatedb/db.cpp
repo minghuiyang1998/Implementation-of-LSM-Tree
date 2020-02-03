@@ -5,11 +5,7 @@ using namespace templatedb;
 
 Value DB::get(int key)
 {
-    if (table.find(key) != table.end())
-        return table[key];
-    else
-        return Value();
-    
+    return table[key];
 }
 
 
@@ -47,6 +43,12 @@ std::vector<Value> DB::scan(int min_key, int max_key)
 void DB::del(int key)
 {
     table.erase(key);
+}
+
+
+size_t DB::size()
+{
+    return table.size();
 }
 
 
