@@ -39,14 +39,15 @@ cmake ..
 cmake --build .
 ```
 
-An example executable should be located in the `example` folder. The
+An example executable should be located in the `build/example` folder. The
 benchmark simply takes in two files, a data file and a workload file and
 measures the time it takes to execute the workload over the dataset. Use the
 `-h` flag to see the proper syntax.
 
 Additionally we have provided some examples of unit test in C++ using gtest.
-This source is located in the `tests/basic_test.cpp`. We highly recommend
-when building your system to continue to expand on unit test.
+This source is located in the `tests/basic_test.cpp`, while the executable
+will be located in `build/tests` directory. We highly recommend when building
+your system to continue to expand on unit test.
 
 
 ## Building Workloads and Datasets
