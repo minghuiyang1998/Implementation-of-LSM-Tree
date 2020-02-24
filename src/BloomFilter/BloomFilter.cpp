@@ -30,7 +30,7 @@ void BloomFilter::program( string key ){
 	getIndex( key, &index );
 
 	for(int i=0; i<numIndex; i++){
-		bf_vec[i] = 1;
+		bf_vec[index[i]] = 1;
 	}
 }
 
@@ -39,7 +39,7 @@ bool BloomFilter::query( string key ){
 	getIndex( key, &index );
 
 	for(int i=0; i<numIndex; i++){
-		if( bf_vec[i] == 0 )
+		if( bf_vec[index[i]] == 0 )
 			return false;
 	}
 
