@@ -7,8 +7,16 @@ set(templatedb_lib
     src/templatedb/operation.cpp
 )
 
+set(bloomfilter_lib
+    src/BloomFilter/BloomFilter.cpp
+    src/BloomFilter/murmurhash.cpp
+)
+
 add_library(${PROJECT_NAME} ${templatedb_lib})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src)
+
+add_library(BF ${bloomfilter_lib})
+target_include_directories(BF PUBLIC ${PROJECT_SOURCE_DIR}/src)
 
 include_directories(external)
 
