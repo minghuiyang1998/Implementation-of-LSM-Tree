@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(templatedb VERSION 0.1.0)
+set(CMAKE_CXX_STANDARD 11)
 
 set(templatedb_lib
     src/templatedb/db.cpp
@@ -29,5 +30,8 @@ add_subdirectory("${CMAKE_BINARY_DIR}/external/googletest-src"
                  "${CMAKE_BINARY_DIR}/external/googletest-build"
 )
 
+enable_testing()
+
 add_subdirectory(examples)
 add_subdirectory(tests)
+
