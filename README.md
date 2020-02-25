@@ -45,9 +45,16 @@ measures the time it takes to execute the workload over the dataset. Use the
 `-h` flag to see the proper syntax.
 
 Additionally we have provided some examples of unit test in C++ using gtest.
-This source is located in the `tests/basic_test.cpp`, while the executable
+This source is located in the `tests/basic_test.cpp`, whith the executable
 will be located in `build/tests` directory. We highly recommend when building
-your system to continue to expand on unit test.
+your system to continue to expand on unit test. If you want to run all test,
+you may use the following command while you are in the build directory.
+
+```bash
+ctest
+```
+
+Both the basic test and persistence test will go through.
 
 
 ## Building Workloads and Datasets
