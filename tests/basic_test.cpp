@@ -52,11 +52,11 @@ TEST_F(DBTest, PutAndGetFunctionality)
 TEST_F(DBTest, DeleteFunctionality)
 {
     db1.del(2);
-    EXPECT_EQ(db1.table.find(2), db1.table.end());
+    EXPECT_EQ(db1.get(2), templatedb::Value(false));
     EXPECT_EQ(db1.size(), 1);
 
     db2.del(1024);
-    EXPECT_EQ(db2.table.find(1024), db2.table.end());
+    EXPECT_EQ(db2.get(1024), templatedb::Value(false));
     EXPECT_EQ(db2.size(), 0);
 }
 

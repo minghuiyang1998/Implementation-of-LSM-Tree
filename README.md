@@ -16,7 +16,7 @@ You will need the following on your system (or alternatively develop on the
 CSA machines)
 
     1. CMake
-    2. Some modern C++ compiler (g++ 9.2.0 was used) 
+    2. C++ Compiler
     3. GoogleTest (Auto compiled and fetched with CMake)
 
 
