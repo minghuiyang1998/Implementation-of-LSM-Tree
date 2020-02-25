@@ -118,7 +118,6 @@ db_status DB::open(std::string & fname)
     if (file.is_open())
     {
         this->status = OPEN;
-        printf("File is open\n");
         // New file implies empty file
         if (file.peek() == std::ifstream::traits_type::eof())
             return this->status;
@@ -145,13 +144,11 @@ db_status DB::open(std::string & fname)
     }
     else if (!file) // File does not exist
     {
-        printf("Fiel does not exist\n");
         this->file.open(fname, std::ios::out);
         this->status = OPEN;
     }
     else
     {
-        printf("Error opening file\n");
         file.close();
         this->status = ERROR_OPEN;
     }
