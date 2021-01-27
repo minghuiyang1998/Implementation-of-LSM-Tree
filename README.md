@@ -76,6 +76,7 @@ First line indicates
 
 | Number of Keys | Dimensions of each Object |
 | :---        |    :----:   |          ---: |
+
 Rest of lines follows the format of
 ```
 OPERATOR,KEY,VALUE
