@@ -49,6 +49,18 @@ void DB::del(int key)
 }
 
 
+void DB::del(int min_key, int max_key)
+{
+    for (auto it = table.begin(); it != table.end(); ) {
+        if ((it->first >= min_key) && (it->first <= max_key)){
+            table.erase(it++);
+        } else { 
+            ++it;
+        }
+    }
+}
+
+
 size_t DB::size()
 {
     return table.size();
@@ -72,7 +84,11 @@ std::vector<Value> DB::execute_op(Operation op)
     }
     else if (op.type == DELETE)
     {
-        this->del(op.key);
+        if ( op.args.size()>0 ){
+            this->del(op.key, op.args[0]);
+        }
+        else
+            this->del(op.key);
     }
 
     return results;
@@ -85,17 +101,22 @@ bool DB::load_data_file(std::string & fname)
     if (fid.is_open())
     {
         int key;
+        int line_num = 0;
         std::string line;
         std::getline(fid, line); // First line is rows, col
         while (std::getline(fid, line))
         {
+            line_num++;
             std::stringstream linestream(line);
             std::string item;
 
-            std::getline(linestream, item, ',');
+            std::getline(linestream, item, ' ');
+            std::string op_code = item;
+
+            std::getline(linestream, item, ' ');
             key = stoi(item);
             std::vector<int> items;
-            while(std::getline(linestream, item, ','))
+            while(std::getline(linestream, item, ' '))
             {
                 items.push_back(stoi(item));
             }

@@ -52,6 +52,7 @@ public:
     std::vector<Value> scan();
     std::vector<Value> scan(int min_key, int max_key);
     void del(int key);
+    void del(int min_key, int max_key);
     size_t size();
 
     db_status open(std::string & fname);

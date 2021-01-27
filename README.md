@@ -71,14 +71,15 @@ gen_data.py <rows> <dim_per_value> <folder>
 gen_workload.py <rows> <dim_per_value> <max_key> <folder>
 ```
 
-Data is generated with commas separating each item
+Data is generated with a space separating each item.
+First line indicates 
 
-Number of Keys | Dimensions of each Object
----------------|--------------------------
-Key 1 | Value 1
-Key 2 | Value 2
-... | ...
-Key N | Value N
+| Number of Keys | Dimensions of each Object |
+| :---        |    :----:   |          ---: |
+Rest of lines follows the format of
+```
+OPERATOR,KEY,VALUE
+```
 
 While workloads follow the format of 
 
@@ -90,5 +91,5 @@ with the first line being the number of total operations.
 
 ## Contact
 
-If you have any questions please feel free to see Andy in office hours, or
-email me at ndhuynh@bu.edu.
+If you have any questions please feel free to see Ju Hyoung in office hours, or
+email me at jmun@bu.edu.

@@ -1,4 +1,3 @@
-#!/bin/python
 import csv
 import random
 import sys
@@ -19,10 +18,11 @@ def main(args):
     possible_keys = random.sample(range(2 * num_rows), num_rows)
 
     with open(fname, 'w') as fid:
-        writer = csv.writer(fid, delimiter=',')
+        writer = csv.writer(fid, delimiter=' ')
         writer.writerow([num_rows, dims])
         for row_id in range(num_rows):
-            tmp = [possible_keys[row_id]]
+            tmp = ['I'] 
+            tmp.append(possible_keys[row_id])
             for _ in range(dims):
                 tmp.append(random.choice(range(MAX_VALUE)))
             writer.writerow(tmp)
