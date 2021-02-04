@@ -1,10 +1,10 @@
-# CS 591 A1: Data Systems Architecture - TemplateDB
+# CS 561: Data Systems Architecture - TemplateDB
 
 
 ## About
 
 TemplateDB is a simple template for you, the student, to use for the systems
-implementation project in CS 591. Note that this is a simple template, it is
+implementation project in CS 561. Note that this is a simple template, it is
 not extensive, rather it is meant to help guide you on what we expect when
 you implement the LSM tree. You can use this as base code or start from
 scratch.
