@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "templatedb/operation.hpp"
+#include "operation.hpp"
 
 namespace templatedb
 {
