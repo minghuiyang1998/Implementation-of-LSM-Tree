@@ -1,0 +1,4 @@
+LevelCount: 4
+Levels: [1,3,5,7]
+
+MMTableThreshold: 50

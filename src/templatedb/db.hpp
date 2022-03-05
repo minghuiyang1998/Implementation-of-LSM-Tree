@@ -10,6 +10,10 @@
 #include <vector>
 
 #include "operation.hpp"
+#include "../Level/Level.hpp"
+#include "../Levels/Levels.hpp"
+#include "../MemoryTable/MemoryTable.hpp"
+#include "../utils/Value.hpp"
 
 namespace templatedb
 {
@@ -21,22 +25,6 @@ typedef enum _status_code
     ERROR_OPEN = 100,
 } db_status;
 
-
-class Value
-{
-public:
-    std::vector<int> items;
-    bool visible = true;
-
-    Value() {}
-    Value(bool _visible) {visible = _visible;}
-    Value(std::vector<int> _items) { items = _items;}
-
-    bool operator ==(Value const & other) const
-    {
-        return (visible == other.visible) && (items == other.items);
-    }
-};
 
 
 class DB
@@ -53,11 +41,14 @@ public:
     std::vector<Value> scan(int min_key, int max_key);
     void del(int key);
     void del(int min_key, int max_key);
+    void compactLeveling();
+    void compactTiering();
     size_t size();
-
+    
     db_status open(std::string & fname);
     bool close();
 
+    bool load_all_files();  
     bool load_data_file(std::string & fname);
 
     std::vector<Value> execute_op(Operation op);
@@ -65,7 +56,13 @@ public:
 private:
     std::fstream file;
     std::unordered_map<int, Value> table;
+    Levels levels;
+    MemoryTable memoryTable;
+
     size_t value_dimensions = 0;
+    bool buildLevels();
+    
+    // int baseLevelSize;  // size of first leve
     
     bool write_to_file();
 };
@@ -73,3 +70,16 @@ private:
 }   // namespace templatedb
 
 #endif /* _TEMPLATEDB_DB_H_ */
+
+
+/**
+ * @brief format of SSTable
+ * metaData:
+ * bloomfilter: vector<bool>
+ * fence pointer: min, max
+ * 
+ * Data:
+ * key1, [value1], timestamp, tombstone
+ * key2, [value2], timestamp, tombstone 
+ * ...
+ */

@@ -1,0 +1,7 @@
+
+class FencePointer {
+public:
+
+private:
+
+};
