@@ -14,11 +14,11 @@ class SSTable {
         string id;
         int size;
         int level;
-        bool isInBloomFilter(string key);
-        bool isInFencePointer(string key);
+        bool isInBloomFilter(int key);
+        bool isInFencePointer(int key);
     public:
         SSTable(/* args */);
-        int query(string key);
+        int query(int key);
 };
 #endif /* LSM_TREE_SST_H */
 

@@ -14,6 +14,7 @@
 #include "../Levels/Levels.hpp"
 #include "../MemoryTable/MemoryTable.hpp"
 #include "../utils/Value.hpp"
+#include "../utils/DBConfig.hpp"
 
 namespace templatedb {
 
@@ -50,6 +51,7 @@ namespace templatedb {
 
         private:
             std::fstream file;
+
             std::unordered_map<int, Value> table;
             Levels levels;
             MemoryTable memoryTable;
