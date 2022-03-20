@@ -19,7 +19,7 @@ class Run {
         bool isInFencePointer(int key);
     public:
         Run(/* args */);
-        int query(int key);
+        Value query(int key);
 };
 #endif /* LSM_TREE_SST_H */
 
