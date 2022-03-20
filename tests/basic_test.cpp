@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "templatedb/db.hpp"
-
+#include "utils/Value.hpp"
 
 class DBTest : public ::testing::Test
 {
@@ -12,10 +12,10 @@ protected:
     templatedb::DB db1;
     templatedb::DB db2;
 
-    templatedb::Value v1 = templatedb::Value({1, 2});
-    templatedb::Value v2 = templatedb::Value({6, 10});
-    templatedb::Value v3 = templatedb::Value({1, 1, 5, 7});
-    templatedb::Value v4 = templatedb::Value({13, 176});
+    Value v1 = Value({1, 2});
+    Value v2 = Value({6, 10});
+    Value v3 = Value({1, 1, 5, 7});
+    Value v4 = Value({13, 176});
 
 
     void SetUp() override 
@@ -35,7 +35,7 @@ TEST_F(DBTest, IsEmptyInitially)
 
 TEST_F(DBTest, GetFunctionality)
 {
-    templatedb::Value val = db1.get(2);
+    Value val = db1.get(2);
     EXPECT_EQ(DBTest::v1, val);
 }
 
@@ -43,7 +43,7 @@ TEST_F(DBTest, GetFunctionality)
 TEST_F(DBTest, PutAndGetFunctionality)
 {
     db0.put(10, v4);
-    templatedb::Value get_value = db0.get(10);
+    Value get_value = db0.get(10);
 
     EXPECT_EQ(DBTest::v4, get_value);
 }
@@ -52,18 +52,18 @@ TEST_F(DBTest, PutAndGetFunctionality)
 TEST_F(DBTest, DeleteFunctionality)
 {
     db1.del(2);
-    EXPECT_EQ(db1.get(2), templatedb::Value(false));
+    EXPECT_EQ(db1.get(2), Value(false));
     EXPECT_EQ(db1.size(), 1);
 
     db2.del(1024);
-    EXPECT_EQ(db2.get(1024), templatedb::Value(false));
+    EXPECT_EQ(db2.get(1024), Value(false));
     EXPECT_EQ(db2.size(), 0);
 }
 
 
 TEST_F(DBTest, ScanFunctionality)
 {
-    std::vector<templatedb::Value> vals;
+    std::vector<Value> vals;
     vals = db2.scan();
     ASSERT_EQ(vals.size(), 1);
     EXPECT_EQ(vals[0], DBTest::v3);

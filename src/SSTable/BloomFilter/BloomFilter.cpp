@@ -1,30 +1,44 @@
-#include "BloomFilter.h"
 #include "murmurhash.h"
+#include "BloomFilter.hpp"
 
 using namespace std;
 using namespace BF;
-
+/**
+ * numIndex: hash count
+ * size: size of bf_vec
+ * bf_vec: bitmap
+ * */
 BloomFilter::BloomFilter(){
 	numElement = 1024;
 	bitsPerElement = 10;
 
-	numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
+	numIndex = (int)floor(0.693*bitsPerElement+ 0.5); // refer to levelDB
 	size = numElement * bitsPerElement;
 }
 
+/**
+ * @param numElement_ represent the number of elements in this bloom filter
+ * @param bitsPerElement_
+ * */
 BloomFilter::BloomFilter( int numElement_, int bitsPerElement_ ){
 	numElement = numElement_;
-	bitsPerElement = bitsPerElement_;
-	numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
+
+    // For small n, we can see a very high false positive rate.  Fix it
+    // by enforcing a minimum bloom filter length.
+	bitsPerElement = bitsPerElement_ < 64 ? 64 : bitsPerElement_;
+
+	numIndex = (int)floor(0.693*bitsPerElement+ 0.5); // refer to levelDB
 	size = numElement * bitsPerElement;
 
 	makeBloomFilter();
 }
 
+// Initialize bloom filter, set size and all bits to 0
 void BloomFilter::makeBloomFilter(){
 	bf_vec.resize(size, 0);
 }
 
+// Add an element
 void BloomFilter::program( string key ){
 	vector<int> index( numIndex, 0 );
 	getIndex( key, &index );
@@ -34,6 +48,7 @@ void BloomFilter::program( string key ){
 	}
 }
 
+// Query an element
 bool BloomFilter::query( string key ){
 	vector<int> index( numIndex, 0 );
 	getIndex( key, &index );
@@ -46,12 +61,18 @@ bool BloomFilter::query( string key ){
 	return true; // positive
 }
 
+//
 void BloomFilter::getIndex( string key, vector<int>* index ){
+    // return 32-bit integer
 	unsigned int h = MurmurHash2( key.c_str(), key.size(), 0xbc9f1d34 );
 
-	const unsigned int delta = (h>>17) | (h<<15); // Rorate right 17 bits
+    // Instead of actually running k hash functions, the original hash
+    // value shift is used to get the value of the post-order hash function
+    // double hashing
+	const unsigned int delta = (h>>17) | (h<<15); // Rotate right 17 bits
+    // set numIndex bits to 1
 	for( int i=0 ; i<numIndex ; i++ ){
-		index->at(i) = h % size;
+		index->at(i) = h % size; // if numIndex is larger than size use mod
 		h += delta;
 	}
 

@@ -1,3 +1,6 @@
+#ifndef LSM_TREE_VALUE_H
+#define LSM_TREE_VALUE_H
+
 #include <vector>
 
 class Value
@@ -18,3 +21,5 @@ public:
         return (visible == other.visible) && (items == other.items);
     }
 };
+
+#endif /* _LSM_TREE_VALUE_H_ */

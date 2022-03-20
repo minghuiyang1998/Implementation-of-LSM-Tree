@@ -100,11 +100,11 @@ std::vector<Value> DB::execute_op(Operation op)
 
 bool DB::buildLevels() {
     // first load config.txt
-    
+    return false;
 }
 
 bool DB::load_all_files() {
-
+    return false;
 } 
 
 bool DB::load_data_file(std::string & fname)

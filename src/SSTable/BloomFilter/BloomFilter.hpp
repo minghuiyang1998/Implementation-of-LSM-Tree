@@ -1,27 +1,33 @@
 #include <vector>
 #include <string>
-#include <math.h>
 
 using namespace std;
 
+namespace BF {
+    class BloomFilter {
+    public:
+        BloomFilter();
 
-class BloomFilter {
-public:
-	BloomFilter();
-	BloomFilter( int numElement_, int bitsPerElement_ );
-	int numElement;
-	int bitsPerElement;
+        BloomFilter(int numElement_, int bitsPerElement_);
 
-	void program(string key);
-	bool query(string key);
+        int numElement;
+        int bitsPerElement;
 
-	int getIndexNum();
-	int getSize();
-private:
-	int numIndex;
-	int size;
-	vector< bool > bf_vec;
+        void program(string key);
 
-	void makeBloomFilter();
-	void getIndex( string key, vector<int>* index );
-};
+        bool query(string key);
+
+        int getIndexNum();
+
+        int getSize();
+
+    private:
+        int numIndex;
+        int size;
+        vector<bool> bf_vec;
+
+        void makeBloomFilter();
+
+        void getIndex(string key, vector<int> *index);
+    };
+}

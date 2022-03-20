@@ -15,58 +15,52 @@
 #include "../MemoryTable/MemoryTable.hpp"
 #include "../utils/Value.hpp"
 
-namespace templatedb
-{
+namespace templatedb {
 
-typedef enum _status_code
-{
-    OPEN = 0,
-    CLOSED = 1,
-    ERROR_OPEN = 100,
-} db_status;
+    typedef enum _status_code {
+        OPEN = 0,
+        CLOSED = 1,
+        ERROR_OPEN = 100,
+    } db_status;
 
+    class DB {
+        public:
+            db_status status;
 
+            DB() {};
+            ~DB() {close();};
 
-class DB
-{
-public:
-    db_status status;
+            Value get(int key);
+            void put(int key, Value val);
+            std::vector<Value> scan();
+            std::vector<Value> scan(int min_key, int max_key);
+            void del(int key);
+            void del(int min_key, int max_key);
+            void compactLeveling();
+            void compactTiering();
+            size_t size();
 
-    DB() {};
-    ~DB() {close();};
+            db_status open(std::string & fname);
+            bool close();
 
-    Value get(int key);
-    void put(int key, Value val);
-    std::vector<Value> scan();
-    std::vector<Value> scan(int min_key, int max_key);
-    void del(int key);
-    void del(int min_key, int max_key);
-    void compactLeveling();
-    void compactTiering();
-    size_t size();
-    
-    db_status open(std::string & fname);
-    bool close();
+            bool load_all_files();
+            bool load_data_file(std::string & fname);
 
-    bool load_all_files();  
-    bool load_data_file(std::string & fname);
+            std::vector<Value> execute_op(Operation op);
 
-    std::vector<Value> execute_op(Operation op);
+        private:
+            std::fstream file;
+            std::unordered_map<int, Value> table;
+            Levels levels;
+            MemoryTable memoryTable;
 
-private:
-    std::fstream file;
-    std::unordered_map<int, Value> table;
-    Levels levels;
-    MemoryTable memoryTable;
+            size_t value_dimensions = 0;
+            bool buildLevels();
 
-    size_t value_dimensions = 0;
-    bool buildLevels();
-    
-    // int baseLevelSize;  // size of first leve
-    
-    bool write_to_file();
-};
+            // int baseLevelSize;  // size of first leve
 
+            bool write_to_file();
+    };
 }   // namespace templatedb
 
 #endif /* _TEMPLATEDB_DB_H_ */

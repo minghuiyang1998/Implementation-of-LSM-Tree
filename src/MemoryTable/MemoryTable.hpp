@@ -1,5 +1,5 @@
 #include "../utils/Value.hpp"
-#include "../SSTable/SSTable.hpp"
+#include "SSTable/SSTable.hpp"
 #include <map>
 
 class MemoryTable {
