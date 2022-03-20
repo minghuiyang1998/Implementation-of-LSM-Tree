@@ -12,13 +12,12 @@ Value DB::get(int key)
 }
 
 
-void DB::put(int key, Value val)
-{
+void DB::put(int key, Value val) {
     table[key] = val;
 
     // 1. put in memory table
     // 2. check if mmtable need to be cleaned
-    // 3, clean() will return a SSTable and put this SSTable into the first level
+    // 3, clean() will return a Run and put this Run into the first level
 }
 
 
@@ -103,9 +102,15 @@ bool DB::buildLevels() {
     return false;
 }
 
-bool DB::load_all_files() {
+bool DB::load_all_sst() {
+    std::vector<std::string> sstList = dbConfig.getSSTList();
+    for (auto sst_file : sstList) {
+        load_sst(sst_file);
+        // TODO: put data in file
+        // TODO: new SST with config in file
+    }
     return false;
-} 
+}
 
 bool DB::load_data_file(std::string & fname)
 {
@@ -192,7 +197,7 @@ db_status DB::open(std::string & fname)
 
 bool DB::close()
 {
-    // before close the database, clean the memory table, create an SSTable and store in a file. call clean() 
+    // before close the database, clean the memory table, create an Run and store in a file. call clean()
     //
     if (file.is_open())
     {

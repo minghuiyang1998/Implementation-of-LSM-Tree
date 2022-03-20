@@ -1,23 +1,24 @@
 #ifndef LSM_TREE_SST_H
 #define LSM_TREE_SST_H
 
-#include "FencePointer/FencePointer.hpp"
+#include "FencePointer.hpp"
 #include "BloomFilter/BloomFilter.hpp"
+#include "../SSTable/TableManager.hpp"
 #include "string"
 
-class SSTable {
+class Run {
     private:
         /* data */
         BF::BloomFilter bloomFilter;
         FencePointer fencePointer;
-        FILE *fp;
+        TableManager fp;
         string id;
         int size;
         int level;
         bool isInBloomFilter(int key);
         bool isInFencePointer(int key);
     public:
-        SSTable(/* args */);
+        Run(/* args */);
         int query(int key);
 };
 #endif /* LSM_TREE_SST_H */

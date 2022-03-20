@@ -44,14 +44,14 @@ namespace templatedb {
             db_status open(std::string & fname);
             bool close();
 
-            bool load_all_files();
+            bool load_all_sst();
             bool load_data_file(std::string & fname);
 
             std::vector<Value> execute_op(Operation op);
 
         private:
             std::fstream file;
-
+            DBConfig dbConfig;
             std::unordered_map<int, Value> table;
             Levels levels;
             MemoryTable memoryTable;
@@ -62,6 +62,7 @@ namespace templatedb {
             // int baseLevelSize;  // size of first leve
 
             bool write_to_file();
+            void load_sst(std::string & fname);
     };
 }   // namespace templatedb
 
@@ -69,7 +70,7 @@ namespace templatedb {
 
 
 /**
- * @brief format of SSTable
+ * @brief format of Run
  * metaData:
  * bloomfilter: vector<bool>
  * fence pointer: min, max

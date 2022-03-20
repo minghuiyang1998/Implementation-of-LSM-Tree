@@ -2,16 +2,17 @@
 // Created by Yang Minghui on 2022/3/19.
 //
 
-#ifndef TEMPLATEDB_DATAFILEMANAGER_HPP
-#define TEMPLATEDB_DATAFILEMANAGER_HPP
+#ifndef TEMPLATEDB_TABLEMANAGER_HPP
+#define TEMPLATEDB_TABLEMANAGER_HPP
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-#include "Value.hpp"
+#include "utils/Value.hpp"
 
 typedef enum file_status {
     OPEN = 0,
@@ -20,16 +21,15 @@ typedef enum file_status {
 } file_status;
 
 /**
- * work for SSTable / db initialization
- * T1 is the type of key, T2 is the type of value
- * return a map of key-value set
- * adapt to db-config <key, int> and SSTable-format <key, Value>
+ * use json format here
  * */
-class DataFileManager {
+class TableManager {
 public:
     file_status status;
 
-    file_status openFile(std::string & fname) {
+    explicit TableManager(std::string fname) : fname(std::move(fname)) {}
+
+    file_status readLines(int start, int end) {
         this->file.open(fname, std::ios::in | std::ios::out);
         if (file.is_open()) {
             this->status = OPEN;
@@ -64,9 +64,21 @@ public:
         }
     }
 
+    file_status readConfig() {
+        // TODO:
+        // read lines
+        // all lines deal with json
+    }
+
+    file_status readData() {
+        // TODO:
+        // read lines
+        // all lines deal with json
+        // return dataset for db.put
+    }
+
     bool closeFile() {
-        // before close the database, clean the memory table, create an SSTable and store in a file. call clean()
-        //
+        // before close the database, clean the memory table, create an Run and store in a file. call clean()
         if (file.is_open()) {
             this->write_to_file();
             file.close();
@@ -102,6 +114,8 @@ private:
     std::fstream file;
     std::unordered_map<int, Value> table;
     size_t value_dimensions = 0;
+    std::string fname;
+    int config_offset = 5;
 };
 
-#endif //TEMPLATEDB_DATAFILEMANAGER_HPP
+#endif //TEMPLATEDB_TABLEMANAGER_HPP

@@ -6,11 +6,15 @@
 #define TEMPLATEDB_STRUCTURE_H
 
 #include "string"
+#include <string>
+#include <iostream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 class DBConfig {
 public:
     // init a empty db
-    DBConfig(int currSstNumber,
+    DBConfig(int currSSTNumber,
              const std::string &dbName,
              const std::string &manifestFileName,
              const std::string &storage) {
@@ -48,6 +52,12 @@ public:
         return MMTableThreshold;
     }
 
+    std::vector<std::string> getSSTList() {
+        std::vector<std::string> res;
+        for (const auto & entry : fs::directory_iterator(sst_storage))
+            res.push_back(entry.path());
+    }
+
 private:
     int curr_SST_number = 0;
     const std::string db_name;
@@ -55,7 +65,7 @@ private:
     const std::string sst_storage = "./storage/";
     int MMTableThreshold;
     int level_numb;
-    vector<int> level_threshold;
+    std::vector<int> level_threshold;
 };
 
 

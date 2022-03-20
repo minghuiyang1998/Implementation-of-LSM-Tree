@@ -2,7 +2,7 @@
 // Created by Yang Minghui on 2022/3/19.
 //
 
-#ifndef TEMPLATEDB_DATAFILEMANAGER_HPP
+#ifndef TEMPLATEDB_TABLEMANAGER_HPP
 #define TEMPLATEDB_FILEMANAGER_HPP
 
 #include <fstream>
@@ -23,7 +23,7 @@ typedef enum file_status {
  * work for db initialization
  * key is a string, value is also a string
  * return a map of key-value set
- * adapt to db-config <key, int> and SSTable-format <key, Value>
+ * adapt to db-config <key, int> and Run-format <key, Value>
  * */
 
 class ConfigFileManager {
@@ -60,7 +60,7 @@ public:
     }
 
     bool closeFile() {
-        // before close the database, clean the memory table, create an SSTable and store in a file. call clean()
+        // before close the database, clean the memory table, create an Run and store in a file. call clean()
         if (file.is_open()) {
             this->write_to_file();
             file.close();
@@ -87,4 +87,4 @@ private:
     std::unordered_map<std::string, std::string> table;
 };
 
-#endif //TEMPLATEDB_DATAFILEMANAGER_HPP
+#endif //TEMPLATEDB_TABLEMANAGER_HPP

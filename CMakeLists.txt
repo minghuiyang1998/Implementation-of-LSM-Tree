@@ -8,8 +8,8 @@ set(templatedb_lib
 )
 
 set(bloomfilter_lib
-    src/SSTable/BloomFilter/BloomFilter.cpp
-    src/SSTable/BloomFilter/murmurhash.cpp
+    src/Run/BloomFilter/BloomFilter.cpp
+    src/Run/BloomFilter/murmurhash.cpp
 )
 
 add_library(${PROJECT_NAME} ${templatedb_lib})

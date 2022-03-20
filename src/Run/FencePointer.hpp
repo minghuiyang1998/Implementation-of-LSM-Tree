@@ -4,8 +4,8 @@
 class FencePointer {
 public:
     FencePointer() {
-        min = INT_MAX;
-        max = INT_MIN;
+        min = INT32_MAX;
+        max = INT32_MIN;
     };
     bool query(int key) {
         return key <= max && key >= min;
