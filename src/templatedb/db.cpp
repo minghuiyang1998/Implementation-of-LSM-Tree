@@ -57,8 +57,16 @@ void DB::del(int min_key, int max_key) {
     }
 }
 
-DB::DB() {
-
+void DB::init(std::string & fname) {
+    // TODO: read config file
+    std::unordered_map<string, string> db_config = {};
+    db_name = db_config["name"];
+    sst_storage = db_config["sst_storage"];
+    // TODO: init Level here
+    // TODO: init MemoryTable here
+    MMTableThreshold = stoi(db_config["MMTableThreshold"]);
+    curr_sst_number = stoi(db_config["curr_sst_number"]);
+    manifest_file_name = fname;
 }
 
 DB::~DB() {
@@ -91,6 +99,8 @@ std::string DB::make_filename(const std::string& name,
     snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
     return name + buf;
 }
+
+
 
 size_t DB::size() {
     return table.size();
