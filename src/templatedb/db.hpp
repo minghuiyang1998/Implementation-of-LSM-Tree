@@ -60,6 +60,11 @@ private:
     MemoryTable memoryTable;
 
     size_t value_dimensions = 0;
+    int totalLevels;
+    vector<int> levelsThreshold;
+    int mmtableThreshold;
+
+
     bool buildLevels();
     
     // int baseLevelSize;  // size of first leve

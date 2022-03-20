@@ -107,45 +107,57 @@ bool DB::load_all_files() {
 
 } 
 
-bool DB::load_data_file(std::string & fname)
+bool DB::load_data_file(std::string & fname) // load a datafile, one file store one run
 {
+    // std::ifstream fid(fname);
+    // if (fid.is_open())
+    // {
+    //     int key;
+    //     int line_num = 0;
+    //     std::string line;
+    //     std::getline(fid, line); // First line is rows, col
+    //     while (std::getline(fid, line))
+    //     {
+    //         line_num++;
+    //         std::stringstream linestream(line);
+    //         std::string item;
+
+    //         std::getline(linestream, item, ' ');
+    //         std::string op_code = item;
+
+    //         std::getline(linestream, item, ' ');
+    //         key = stoi(item);
+    //         std::vector<int> items;
+    //         while(std::getline(linestream, item, ' '))
+    //         {
+    //             items.push_back(stoi(item));
+    //         }
+    //         this->put(key, Value(items));
+    //     }
+    // }
+    // else
+    // {
+    //     fprintf(stderr, "Unable to read %s\n", fname.c_str());
+    //     return false;
+    // }
     std::ifstream fid(fname);
-    if (fid.is_open())
-    {
-        int key;
-        int line_num = 0;
-        std::string line;
-        std::getline(fid, line); // First line is rows, col
-        while (std::getline(fid, line))
-        {
-            line_num++;
-            std::stringstream linestream(line);
-            std::string item;
+    if(fid.is_open()) {
+        std::string readLine;
+        std::getline(fid, readLine);
+        Run r = Run(); // TODO: need to wirte constructors and pass arguments later
 
-            std::getline(linestream, item, ' ');
-            std::string op_code = item;
-
-            std::getline(linestream, item, ' ');
-            key = stoi(item);
-            std::vector<int> items;
-            while(std::getline(linestream, item, ' '))
-            {
-                items.push_back(stoi(item));
-            }
-            this->put(key, Value(items));
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Unable to read %s\n", fname.c_str());
+        int l_num = stoi(readLine);
+        Level level = this->levels.getLevelVector(l_num);
+        level.addARun(r);
+    } else {
+        fprintf(stderr, "Unable to read run file %s", fname.c_str());
         return false;
     }
-
     return true;
 }
 
 
-db_status DB::open(std::string & fname)
+db_status DB::open(std::string & fname)    // open config.txt, set initial attributes
 {
     this->file.open(fname, std::ios::in | std::ios::out);
     if (file.is_open())
@@ -155,25 +167,48 @@ db_status DB::open(std::string & fname)
         if (file.peek() == std::ifstream::traits_type::eof())
             return this->status;
 
-        int key;
-        std::string line;
-        std::getline(file, line); // First line is rows, col
-        while (std::getline(file, line))
-        {
-            std::stringstream linestream(line);
-            std::string item;
+        // read total number of levels
+        std::string readLine;
+        std::getline(file, readLine); // First line is 4
+        this->totalLevels = stoi(readLine);
+        this->levels = Levels(this->totalLevels);
 
-            std::getline(linestream, item, ',');
-            key = stoi(item);
-            std::vector<int> items;
-            while(std::getline(linestream, item, ','))
-            {
-                items.push_back(stoi(item));
-            }
-            this->put(key, Value(items));
-            if (value_dimensions == 0)
-                value_dimensions = items.size();
+        // read threshold for every level
+        std::getline(file, readLine); // Second line is 1,3,5
+        std::stringstream levelstream(readLine);
+        std::string levelThresholdStr;
+        this->levelsThreshold = vector<int>(this->totalLevels-1);
+        while(std::getline(levelstream, levelThresholdStr, ',')) {
+            this->levelsThreshold.push_back(stoi(levelThresholdStr));
         }
+
+        // read mmtablethreshold
+        std::getline(file, readLine); // First line is 50
+        this->mmtableThreshold = stoi(readLine);
+
+        // construct all levels
+        for(int i = 0; i < this->totalLevels; i++) {
+            Level newLevel = Level(i, this->levelsThreshold[i]);
+            this->levels.setLevel(i, newLevel);
+        }
+
+
+        // while (std::getline(file, line))
+        // {
+        //     std::stringstream linestream(line);
+        //     std::string item;
+
+        //     std::getline(linestream, item, ',');
+        //     key = stoi(item);
+        //     std::vector<int> items;
+        //     while(std::getline(linestream, item, ','))
+        //     {
+        //         items.push_back(stoi(item));
+        //     }
+        //     this->put(key, Value(items));
+        //     if (value_dimensions == 0)
+        //         value_dimensions = items.size();
+        // }
     }
     else if (!file) // File does not exist
     {

@@ -2,7 +2,7 @@
 #include "BloomFilter/BloomFilter.hpp"
 #include "string"
 
-class SSTable
+class Run
 {
 private:
     /* data */
@@ -14,14 +14,7 @@ private:
     int level;
     
 public:
-    SSTable(/* args */);
-    ~SSTable();
+    Run(/* args */);
+    ~Run();
 };
 
-SSTable::SSTable(/* args */)
-{
-}
-
-SSTable::~SSTable()
-{
-}
