@@ -3,7 +3,7 @@
 
 #include "FencePointer.hpp"
 #include "BloomFilter/BloomFilter.hpp"
-#include "../SSTable/TableManager.hpp"
+#include "../SSTable/TableReader.hpp"
 #include "string"
 
 class Run {
@@ -11,7 +11,7 @@ class Run {
         /* data */
         BF::BloomFilter bloomFilter;
         FencePointer fencePointer;
-        TableManager fp;
+        TableReader fp;
         string id;
         int size;
         int level;

@@ -3,8 +3,7 @@
 using namespace templatedb;
 
 
-Value DB::get(int key)
-{
+Value DB::get(int key) {
     if (table.count(key))
         return table[key];
     
@@ -20,9 +19,7 @@ void DB::put(int key, Value val) {
     // 3, clean() will return a Run and put this Run into the first level
 }
 
-
-std::vector<Value> DB::scan()
-{
+std::vector<Value> DB::scan() {
     std::vector<Value> return_vector;
     for (auto pair: table)
     {
@@ -33,8 +30,7 @@ std::vector<Value> DB::scan()
 }
 
 
-std::vector<Value> DB::scan(int min_key, int max_key)
-{
+std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
     for (auto pair: table)
     {
@@ -46,14 +42,12 @@ std::vector<Value> DB::scan(int min_key, int max_key)
 }
 
 
-void DB::del(int key)
-{
+void DB::del(int key) {
     table.erase(key);
 }
 
 
-void DB::del(int min_key, int max_key)
-{
+void DB::del(int min_key, int max_key) {
     for (auto it = table.begin(); it != table.end(); ) {
         if ((it->first >= min_key) && (it->first <= max_key)){
             table.erase(it++);
@@ -63,13 +57,46 @@ void DB::del(int min_key, int max_key)
     }
 }
 
+DB::DB() {
 
-size_t DB::size()
-{
+}
+
+DB::~DB() {
+    close();
+}
+
+bool DB::buildLevels() {
+    // first load config.txt
+    return false;
+}
+
+bool DB::load_all_sst() {
+    std::vector<std::string> sstList = get_sst_list();
+    for (auto sst_file : sstList) {
+        // TODO: new SST with config in file
+    }
+    return false;
+}
+
+std::vector<std::string> DB::get_sst_list() {
+    std::vector<std::string> res;
+    for (const auto & entry : std::__fs::filesystem::directory_iterator(sst_storage))
+        res.push_back(entry.path());
+}
+
+std::string DB::make_filename(const std::string& name,
+                         uint64_t number,
+                         const char* suffix) {
+    char buf[100];
+    snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
+    return name + buf;
+}
+
+size_t DB::size() {
     return table.size();
 }
 
-
+// used in simple_benchmark.cpp
 std::vector<Value> DB::execute_op(Operation op)
 {
     std::vector<Value> results;
@@ -97,21 +124,7 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-bool DB::buildLevels() {
-    // first load config.txt
-    return false;
-}
-
-bool DB::load_all_sst() {
-    std::vector<std::string> sstList = dbConfig.getSSTList();
-    for (auto sst_file : sstList) {
-        load_sst(sst_file);
-        // TODO: put data in file
-        // TODO: new SST with config in file
-    }
-    return false;
-}
-
+// used in simple_benchmark.cpp
 bool DB::load_data_file(std::string & fname)
 {
     std::ifstream fid(fname);
@@ -150,6 +163,7 @@ bool DB::load_data_file(std::string & fname)
 }
 
 
+// used in persistence_test.cpp && simple_benchmark.cpp
 db_status DB::open(std::string & fname)
 {
     this->file.open(fname, std::ios::in | std::ios::out);

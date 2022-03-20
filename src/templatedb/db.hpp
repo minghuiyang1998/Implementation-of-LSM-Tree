@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 #include <iterator>
 #include <string>
 #include <sstream>
@@ -14,7 +15,6 @@
 #include "../Levels/Levels.hpp"
 #include "../MemoryTable/MemoryTable.hpp"
 #include "../utils/Value.hpp"
-#include "../utils/DBConfig.hpp"
 
 namespace templatedb {
 
@@ -28,10 +28,9 @@ namespace templatedb {
         public:
             db_status status;
 
-            DB() {};
-            ~DB() {close();};
+        DB();
 
-            Value get(int key);
+        Value get(int key);
             void put(int key, Value val);
             std::vector<Value> scan();
             std::vector<Value> scan(int min_key, int max_key);
@@ -43,15 +42,18 @@ namespace templatedb {
 
             db_status open(std::string & fname);
             bool close();
-
-            bool load_all_sst();
             bool load_data_file(std::string & fname);
-
             std::vector<Value> execute_op(Operation op);
 
-        private:
+        virtual ~DB();
+
+    private:
+            const std::string db_name;
+            std::string manifest_file_name;
+            const std::string sst_storage = "./storage/";
+            int curr_SST_number = 0;
+
             std::fstream file;
-            DBConfig dbConfig;
             std::unordered_map<int, Value> table;
             Levels levels;
             MemoryTable memoryTable;
@@ -62,7 +64,9 @@ namespace templatedb {
             // int baseLevelSize;  // size of first leve
 
             bool write_to_file();
-            void load_sst(std::string & fname);
+            bool load_all_sst();
+            std::vector<std::string> get_sst_list();
+            std::string make_filename(const std::string& name, uint64_t number, const char* suffix);
     };
 }   // namespace templatedb
 
