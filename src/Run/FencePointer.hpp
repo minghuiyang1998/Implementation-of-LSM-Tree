@@ -13,6 +13,14 @@ public:
     void program(int key) {
         max = std::max(key, max);
         min = std::min(key, min);
+    }
+
+    int getMin() const {
+        return min;
+    }
+
+    int getMax() const {
+        return max;
     };
 private:
     int min;

@@ -13,20 +13,48 @@ Value Run::query(int key) {
     bool isInFP = isInFencePointer(key);
 
     if (!isInBF || !isInFP) return {};
-
-    // TODO: read Data find the value
+    std::map<int, Value> map = readDisk();
+    return map[key];
 }
 
 std::vector<Value> Run::range_query(int min_key, int max_key) {
+    int fp_min = fencePointer.getMin();
+    int fp_max = fencePointer.getMax();
+    // not available element in this sst
+    if (min_key > fp_max || max_key < fp_min) return {};
 
+    std::vector<Value> results;
+    std::map<int, Value> map = readDisk();
+    for (const auto& element : map) {
+        int key = element.first;
+        if (key <= fp_max && key >= min_key) {
+            Value val = element.second;
+            results.push_back(val);
+        }
+    }
+    return results;
 }
 
-Run::Run() {
-    // TODO: generate sst and store
-    // TODO: call another constructor to setup the config
-
+Run::Run(string id, int level, std::fstream *file, const std::map<int, Value>& map) {
+    this->id = id;
+    this->level = level;
+    this->file = file;
+    for (const auto& element : map) {
+        std::string key = to_string(element.first);
+        bloomFilter.program(key);
+        fencePointer.program(element.first);
+    }
 }
 
-Run::Run() {
+std::map<int, Value> Run::readDisk() {
+    // TODO: copy from db.cpp, use *file to get data
 
+    return {};
 }
+
+void Run::closeFile() {
+    file->close();
+}
+
+
+

@@ -4,6 +4,8 @@
 #include "FencePointer.hpp"
 #include "BloomFilter/BloomFilter.hpp"
 #include "../SSTable/TableReader.hpp"
+#include "../utils/Value.hpp"
+#include <map>
 #include "string"
 
 class Run {
@@ -11,17 +13,18 @@ class Run {
         /* data */
         BF::BloomFilter bloomFilter;
         FencePointer fencePointer;
-        TableReader fp;
+        std::fstream *file;
         string id;
         int size;
         int level;
         bool isInBloomFilter(int key);
         bool isInFencePointer(int key);
+        std::map<int, Value> readDisk();
     public:
-        Run(unordered_map<int, Value> map);
-        Run();
+        Run(string id, int level, std::fstream *file, const std::map<int, Value>& map);
         Value query(int key);
         std::vector<Value> range_query(int min_key, int max_key);
+        void closeFile();
 };
 #endif /* LSM_TREE_SST_H */
 
