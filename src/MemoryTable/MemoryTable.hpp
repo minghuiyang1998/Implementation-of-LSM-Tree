@@ -8,6 +8,14 @@ private:
 
 public:
 
+    MemoryTable(){
+        this->map = map<int, Value> myMap;
+    }
+    ~MemoryTable() = default;
+
+    MemoryTable(const MemoryTable&) = delete;
+    MemoryTable& operator=(const MemoryTable&) = delete;
+
     /**
      * return the map and then clear it
      * @return
