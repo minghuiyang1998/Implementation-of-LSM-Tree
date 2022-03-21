@@ -16,18 +16,23 @@ Value DB::get(int key) {
 
 void DB::put(int key, Value val) {
     // 1. put in memory table
+    // TODO: fullfill all the attriutes in val
     memoryTable.insert(key, val);
-    if(memoryTable.getMapSize() > MMTableThreshold) {
+    if(memoryTable.getMapSize() > mmtableThreshold) {
         // 2. check if memory-table need to be cleaned
         std::map<int, Value> data = memoryTable.clean();
-        // TODO: create new run and add to first level
+        // TODO: create new run and add to first level, create a new file
+        // constructor
         string id = "";
-        int level = 0;
-        std::fstream *f = nullptr;
-        Run newRun = Run(id, level, f, data);
-        //while (level != last level && level.overthreshold) {
-            // compact();
-        //}
+        int level = 1;
+        std::string path;
+        // Run newRun = Run(id, level, f, data);
+        // add new run to level
+        if(compactionType == CompactionType.Leveling) {
+            compactLeveling();
+        } else {
+            compactTiering();
+        }
     }
 }
 
@@ -40,7 +45,8 @@ std::vector<Value> DB::scan(int min_key, int max_key) {
 }
 
 void DB::del(int key) {
-    table.erase(key);
+    // create new value with visible = false
+    // put(key, value)
 }
 
 void DB::del(int min_key, int max_key) {
@@ -53,51 +59,37 @@ void DB::del(int min_key, int max_key) {
     }
 }
 
-void DB::init(std::string & fname) {
-    // 1. read config file
-    std::unordered_map<string, string> db_config = {};
-    db_name = db_config["name"];
-    sst_storage = db_config["sst_storage"];
-    // TODO: init Level here
-    //    buildLevels();
-    // TODO: init MemoryTable here
-    MMTableThreshold = stoi(db_config["MMTableThreshold"]);
-    curr_sst_number = stoi(db_config["curr_sst_number"]);
-    manifest_file_name = fname;
-    // 2. load all sst
-    load_all_sst();
-}
 
 DB::~DB() {
     close();
 }
 
-bool DB::buildLevels(std::vector<int> levels) {
+// bool DB::buildLevels(std::vector<int> levels) {
 
-    return false;
-}
+//     return false;
+// }
 
-bool DB::load_all_sst() {
-    std::vector<std::string> sstList = get_sst_list();
-    for (auto sst_file : sstList) {
-        // TODO: new SST with config and data(for bloom filter and fence pointer
-    }
-    return false;
-}
+// bool DB::load_all_sst() {
+//     std::vector<std::string> sstList = get_sst_list();
+//     for (auto sst_file : sstList) {
+//         // TODO: new SST with config and data(for bloom filter and fence pointer
+//     }
+//     return false;
+// }
 
-std::vector<std::string> DB::get_sst_list() {
-    std::vector<std::string> res;
-    for (const auto & entry : std::__fs::filesystem::directory_iterator(sst_storage))
-        res.push_back(entry.path());
-}
+// std::vector<std::string> DB::get_sst_list() {
+//     std::vector<std::string> res;
+//     for (const auto & entry : std::__fs::filesystem::directory_iterator(sst_storage))
+//         res.push_back(entry.path());
+// }
 
-std::string DB::make_filename(const std::string& name,
-                         uint64_t number,
-                         const char* suffix) {
-    char buf[100];
-    snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
-    return name + buf;
-}
+// std::string DB::make_filename(const std::string& name,
+//                          uint64_t number,
+//                          const char* suffix) {
+//     char buf[100];
+//     snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
+//     return name + buf;
+// }
 
 size_t DB::size() {
     return table.size();
@@ -140,15 +132,6 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-bool DB::buildLevels() {
-    // first load config.txt
-    
-}
-
-bool DB::load_all_files() {
-
-} 
-
 bool DB::load_data_file(std::string & fname) // load a datafile, one file store one run
 {
     // std::ifstream fid(fname);
@@ -189,12 +172,10 @@ bool DB::load_data_file(std::string & fname) // load a datafile, one file store 
         int l_num = stoi(readLine);
         std::getline(fid, readLine);
         int size = stoi(readLine);
-
-        Run r = Run(); // TODO: need to wirte constructors and pass arguments late
         map<int, Value> data = load_data(fname);
-        // TODO: generate bloom filter here
-        // TODO: generate fence pointer here
 
+        Run r = Run("", l_num, fname, data); // TODO: need to wirte constructors and pass arguments late
+        
         Level level = this->levels.getLevelVector(l_num);
         level.addARun(r);
     } else {
@@ -217,7 +198,7 @@ map<int, Value> DB::load_data(std::string & fname) {
     if(fid.is_open()) {
         while(std::getline(fid, readLine)) {
             int key, timestamp;
-            bool visible, tombstone;
+            bool visible;
             vector<int> items = vector<int>();
             if(linecount == 0 || linecount == 1) continue;  // skip first two rows
             std::stringstream valuestream(readLine);
@@ -229,16 +210,13 @@ map<int, Value> DB::load_data(std::string & fname) {
                     visible = parsebool(str);
                 }
                 else if (itemcount == 2) timestamp = stoi(str);
-                else if(itemcount == 3) {
-                    tombstone = parsebool(str);
-                }
                 else {
                     items.push_back(stoi(str));
                 }
                 itemcount++;
             }
             linecount++;
-            Value v = Value(visible, timestamp, tombstone, items);
+            Value v = Value(visible, timestamp, items);
             ret[key] = v;
         }
     } else {
@@ -275,7 +253,7 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
         }
 
         // read mmtablethreshold
-        std::getline(file, readLine); // First line is 50
+        std::getline(file, readLine); // Third line is 50
         this->mmtableThreshold = stoi(readLine);
 
         // construct all levels
@@ -283,6 +261,10 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
             Level newLevel = Level(i, this->levelsThreshold[i]);
             this->levels.setLevel(i, newLevel);
         }
+
+        // TODO: read compaction type
+
+        // TODO: read generator count
 
 
         // while (std::getline(file, line))
@@ -301,6 +283,9 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
         //     if (value_dimensions == 0)
         //         value_dimensions = items.size();
         // }
+
+        //TODO: get all the runs file path ()
+        //TODO: while() {load_data_file}
     }
     else if (!file) // File does not exist
     {
