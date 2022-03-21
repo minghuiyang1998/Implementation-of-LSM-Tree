@@ -63,7 +63,7 @@ namespace templatedb {
             std::unordered_map<int, Value> table;
             size_t value_dimensions = 0;
 
-            bool buildLevels();
+            bool buildLevels(std::vector<int> levels);
             bool load_all_sst();
             std::vector<std::string> get_sst_list();
             std::string make_filename(const std::string& name, uint64_t number, const char* suffix);

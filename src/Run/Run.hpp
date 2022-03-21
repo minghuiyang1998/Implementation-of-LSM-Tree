@@ -18,8 +18,10 @@ class Run {
         bool isInBloomFilter(int key);
         bool isInFencePointer(int key);
     public:
-        Run(/* args */);
+        Run(unordered_map<int, Value> map);
+        Run();
         Value query(int key);
+        std::vector<Value> range_query(int min_key, int max_key);
 };
 #endif /* LSM_TREE_SST_H */
 

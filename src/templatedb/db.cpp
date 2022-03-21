@@ -2,50 +2,30 @@
 
 using namespace templatedb;
 
-
 Value DB::get(int key) {
-    if (table.count(key))
-        return table[key];
-    
+    // 1. memoryTable search
+    // 2. search in levels
     return Value(false);
 }
 
-
 void DB::put(int key, Value val) {
     table[key] = val;
-
     // 1. put in memory table
     // 2. check if mmtable need to be cleaned
     // 3, clean() will return a Run and put this Run into the first level
 }
 
-std::vector<Value> DB::scan() {
-    std::vector<Value> return_vector;
-    for (auto pair: table)
-    {
-        return_vector.push_back(pair.second);
-    }
-
-    return return_vector;
-}
-
 
 std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
-    for (auto pair: table)
-    {
-        if ((pair.first >= min_key) && (pair.first <= max_key))
-            return_vector.push_back(pair.second);
-    }
-
+    // 1. memoryTable search
+    // 2. search in levels
     return return_vector;
 }
-
 
 void DB::del(int key) {
     table.erase(key);
 }
-
 
 void DB::del(int min_key, int max_key) {
     for (auto it = table.begin(); it != table.end(); ) {
@@ -58,30 +38,33 @@ void DB::del(int min_key, int max_key) {
 }
 
 void DB::init(std::string & fname) {
-    // TODO: read config file
+    // 1. read config file
     std::unordered_map<string, string> db_config = {};
     db_name = db_config["name"];
     sst_storage = db_config["sst_storage"];
     // TODO: init Level here
+    //    buildLevels();
     // TODO: init MemoryTable here
     MMTableThreshold = stoi(db_config["MMTableThreshold"]);
     curr_sst_number = stoi(db_config["curr_sst_number"]);
     manifest_file_name = fname;
+    // 2. load all sst
+    load_all_sst();
 }
 
 DB::~DB() {
     close();
 }
 
-bool DB::buildLevels() {
-    // first load config.txt
+bool DB::buildLevels(std::vector<int> levels) {
+
     return false;
 }
 
 bool DB::load_all_sst() {
     std::vector<std::string> sstList = get_sst_list();
     for (auto sst_file : sstList) {
-        // TODO: new SST with config in file
+        // TODO: new SST with config and data(for bloom filter and fence pointer
     }
     return false;
 }
@@ -100,10 +83,17 @@ std::string DB::make_filename(const std::string& name,
     return name + buf;
 }
 
-
-
 size_t DB::size() {
     return table.size();
+}
+
+// used in basic_test.cpp
+std::vector<Value> DB::scan() {
+    std::vector<Value> return_vector;
+    for (auto pair: table) {
+        return_vector.push_back(pair.second);
+    }
+    return return_vector;
 }
 
 // used in simple_benchmark.cpp
@@ -171,7 +161,6 @@ bool DB::load_data_file(std::string & fname)
 
     return true;
 }
-
 
 // used in persistence_test.cpp && simple_benchmark.cpp
 db_status DB::open(std::string & fname)

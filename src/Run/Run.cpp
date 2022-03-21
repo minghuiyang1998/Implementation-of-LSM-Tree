@@ -17,3 +17,16 @@ Value Run::query(int key) {
     // TODO: read Data find the value
 }
 
+std::vector<Value> Run::range_query(int min_key, int max_key) {
+
+}
+
+Run::Run() {
+    // TODO: generate sst and store
+    // TODO: call another constructor to setup the config
+
+}
+
+Run::Run() {
+
+}
