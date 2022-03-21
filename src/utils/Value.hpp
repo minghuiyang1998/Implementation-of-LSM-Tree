@@ -2,24 +2,26 @@
 #define LSM_TREE_VALUE_H
 
 #include <vector>
+#include <ctime>
 
-class Value
-{
+class Value {
 public:
     std::vector<int> items;
     bool visible = true;
-    int timestamp;
-    bool isTombstone;
+    long timestamp;
 
+    Value(bool _visible) {
+        timestamp = std::time(nullptr);
+        visible = _visible;
+    }
+    Value(std::vector<int> _items) {
+        timestamp = std::time(nullptr);
+        items = _items;
+    }
 
-    Value() {}
-    Value(bool _visible) {visible = _visible;}
-    Value(std::vector<int> _items) { items = _items;}
-
-    bool operator ==(Value const & other) const
-    {
+    bool operator ==(Value const & other) const {
         return (visible == other.visible) && (items == other.items);
     }
 };
 
-#endif /* _LSM_TREE_VALUE_H_ */
+#endif /* LSM_TREE_VALUE_H */
