@@ -1,4 +1,5 @@
 #include "db.hpp"
+#include "../SSTable/Run.hpp"
 
 using namespace templatedb;
 
@@ -144,9 +145,15 @@ bool DB::load_data_file(std::string & fname) // load a datafile, one file store 
     if(fid.is_open()) {
         std::string readLine;
         std::getline(fid, readLine);
-        Run r = Run(); // TODO: need to wirte constructors and pass arguments later
-
         int l_num = stoi(readLine);
+        std::getline(fid, readLine);
+        int size = stoi(readLine);
+
+        Run r = Run(); // TODO: need to wirte constructors and pass arguments late
+        map<int, Value> data = load_data(fname);
+        // TODO: generate bloom filter here
+        // TODO: generate fence pointer here
+
         Level level = this->levels.getLevelVector(l_num);
         level.addARun(r);
     } else {
@@ -155,6 +162,50 @@ bool DB::load_data_file(std::string & fname) // load a datafile, one file store 
     }
     return true;
 }
+
+bool parsebool(std::string str) {
+    if(str == "true") return true;
+    else return false;
+}
+
+map<int, Value> DB::load_data(std::string & fname) {
+    std::ifstream fid(fname);
+    std::string readLine;
+    map<int, Value> ret;
+    int linecount = 0;
+    if(fid.is_open()) {
+        while(std::getline(fid, readLine)) {
+            int key, timestamp;
+            bool visible, tombstone;
+            vector<int> items = vector<int>();
+            if(linecount == 0 || linecount == 1) continue;  // skip first two rows
+            std::stringstream valuestream(readLine);
+            std::string str;
+            int itemcount = 0;
+            while(std::getline(valuestream, str, ',')) {
+                if(itemcount == 0) key = stoi(str);
+                else if(itemcount == 1) {
+                    visible = parsebool(str);
+                }
+                else if (itemcount == 2) timestamp = stoi(str);
+                else if(itemcount == 3) {
+                    tombstone = parsebool(str);
+                }
+                else {
+                    items.push_back(stoi(str));
+                }
+                itemcount++;
+            }
+            linecount++;
+            Value v = Value(visible, timestamp, tombstone, items);
+            ret[key] = v;
+        }
+    } else {
+        fprintf(stderr, "Unable to read run file %s", fname.c_str());
+    }
+    return ret;
+}
+
 
 
 db_status DB::open(std::string & fname)    // open config.txt, set initial attributes

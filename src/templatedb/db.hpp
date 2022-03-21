@@ -13,6 +13,7 @@
 #include "../Level/Level.hpp"
 #include "../Levels/Levels.hpp"
 #include "../MemoryTable/MemoryTable.hpp"
+#include "../SSTable/Run.hpp"
 #include "../utils/Value.hpp"
 
 namespace templatedb
@@ -50,6 +51,7 @@ public:
 
     bool load_all_files();  
     bool load_data_file(std::string & fname);
+    map<int, Value> load_data(std::string & fname);
 
     std::vector<Value> execute_op(Operation op);
 
