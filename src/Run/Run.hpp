@@ -3,7 +3,6 @@
 
 #include "FencePointer.hpp"
 #include "BloomFilter/BloomFilter.hpp"
-#include "../SSTable/TableReader.hpp"
 #include "../utils/Value.hpp"
 #include <map>
 #include "string"
