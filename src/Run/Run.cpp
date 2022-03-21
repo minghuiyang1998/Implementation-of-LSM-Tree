@@ -35,10 +35,10 @@ std::vector<Value> Run::range_query(int min_key, int max_key) {
     return results;
 }
 
-Run::Run(string id, int level, std::fstream *file, const std::map<int, Value>& map) {
+Run::Run(string id, int level, std::string filePath, const std::map<int, Value>& map) {
     this->id = id;
     this->level = level;
-    this->file = file;
+    this->filePath = filePath;
     for (const auto& element : map) {
         std::string key = to_string(element.first);
         bloomFilter.program(key);
@@ -51,10 +51,5 @@ std::map<int, Value> Run::readDisk() {
 
     return {};
 }
-
-void Run::closeFile() {
-    file->close();
-}
-
 
 

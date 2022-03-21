@@ -27,6 +27,10 @@ typedef enum _status_code
     ERROR_OPEN = 100,
 } db_status;
 
+typedef enum Level_Type_ {
+    Tiering,
+    Leveling,
+} CompactionType;
 
 
 class DB
@@ -61,9 +65,11 @@ private:
     std::unordered_map<int, Value> table;
     Levels levels;
     MemoryTable memoryTable;
+    CompactionType compactionType;
 
     size_t value_dimensions = 0;
     int totalLevels;
+    int generatorCount;  //TODO:
     vector<int> levelsThreshold;
     int mmtableThreshold;
 
