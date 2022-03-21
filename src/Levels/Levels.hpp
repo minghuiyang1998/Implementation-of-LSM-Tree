@@ -1,3 +1,6 @@
+#ifndef _LSM_TREE_LEVELS_H_
+#define _LSM_TREE_LEVELS_H_
+
 #include "../Level/Level.hpp"
 #include "vector"
 
@@ -13,3 +16,6 @@ public:
     void setLevel(int num, Level l);
     Level getLevelVector(int l);
 };
+};
+
+#endif /* _LSM_TREE_LEVELS_H_ */

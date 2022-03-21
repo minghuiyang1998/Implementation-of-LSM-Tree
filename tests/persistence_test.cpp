@@ -3,8 +3,8 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "../src/templatedb/db.hpp"
-#include "../src/utils/Value.hpp"
+#include "templatedb/db.hpp"
+#include "utils/Value.hpp"
 
 TEST(PersistenceTest, BasicOpenClose)
 {

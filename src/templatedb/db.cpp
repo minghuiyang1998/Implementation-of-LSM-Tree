@@ -1,61 +1,34 @@
 #include "db.hpp"
-#include "../SSTable/Run.hpp"
+#include "../Run/Run.hpp"
 
 using namespace templatedb;
 
-
-Value DB::get(int key)
-{
-    if (table.count(key))
-        return table[key];
-    
+Value DB::get(int key) {
+    // 1. memoryTable search
+    // 2. search in levels
     return Value(false);
 }
 
-
-void DB::put(int key, Value val)
-{
+void DB::put(int key, Value val) {
     table[key] = val;
-
     // 1. put in memory table
     // 2. check if mmtable need to be cleaned
-    // 3, clean() will return a SSTable and put this SSTable into the first level
+    // 3, clean() will return a Run and put this Run into the first level
 }
 
 
-std::vector<Value> DB::scan()
-{
+std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
-    for (auto pair: table)
-    {
-        return_vector.push_back(pair.second);
-    }
-
+    // 1. memoryTable search
+    // 2. search in levels
     return return_vector;
 }
 
-
-std::vector<Value> DB::scan(int min_key, int max_key)
-{
-    std::vector<Value> return_vector;
-    for (auto pair: table)
-    {
-        if ((pair.first >= min_key) && (pair.first <= max_key))
-            return_vector.push_back(pair.second);
-    }
-
-    return return_vector;
-}
-
-
-void DB::del(int key)
-{
+void DB::del(int key) {
     table.erase(key);
 }
 
-
-void DB::del(int min_key, int max_key)
-{
+void DB::del(int min_key, int max_key) {
     for (auto it = table.begin(); it != table.end(); ) {
         if ((it->first >= min_key) && (it->first <= max_key)){
             table.erase(it++);
@@ -65,13 +38,66 @@ void DB::del(int min_key, int max_key)
     }
 }
 
+void DB::init(std::string & fname) {
+    // 1. read config file
+    std::unordered_map<string, string> db_config = {};
+    db_name = db_config["name"];
+    sst_storage = db_config["sst_storage"];
+    // TODO: init Level here
+    //    buildLevels();
+    // TODO: init MemoryTable here
+    MMTableThreshold = stoi(db_config["MMTableThreshold"]);
+    curr_sst_number = stoi(db_config["curr_sst_number"]);
+    manifest_file_name = fname;
+    // 2. load all sst
+    load_all_sst();
+}
 
-size_t DB::size()
-{
+DB::~DB() {
+    close();
+}
+
+bool DB::buildLevels(std::vector<int> levels) {
+
+    return false;
+}
+
+bool DB::load_all_sst() {
+    std::vector<std::string> sstList = get_sst_list();
+    for (auto sst_file : sstList) {
+        // TODO: new SST with config and data(for bloom filter and fence pointer
+    }
+    return false;
+}
+
+std::vector<std::string> DB::get_sst_list() {
+    std::vector<std::string> res;
+    for (const auto & entry : std::__fs::filesystem::directory_iterator(sst_storage))
+        res.push_back(entry.path());
+}
+
+std::string DB::make_filename(const std::string& name,
+                         uint64_t number,
+                         const char* suffix) {
+    char buf[100];
+    snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
+    return name + buf;
+}
+
+size_t DB::size() {
     return table.size();
 }
 
+// used in basic_test.cpp
+std::vector<Value> DB::scan() {
+    std::vector<Value> return_vector;
+    for (auto pair: table) {
+        return_vector.push_back(pair.second);
+    }
+    return return_vector;
+}
 
+// used in simple_benchmark.cpp
 std::vector<Value> DB::execute_op(Operation op)
 {
     std::vector<Value> results;
@@ -278,7 +304,7 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
 
 bool DB::close()
 {
-    // before close the database, clean the memory table, create an SSTable and store in a file. call clean() 
+    // before close the database, clean the memory table, create an Run and store in a file. call clean()
     //
     if (file.is_open())
     {

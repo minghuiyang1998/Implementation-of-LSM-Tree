@@ -1,4 +1,7 @@
-#include "../SSTable/Run.hpp"
+#ifndef _LSM_TREE_LEVEL_H_
+#define _LSM_TREE_LEVEL_H_
+
+#include "../Run/Run.hpp"
 #include <vector>
 
 typedef enum Level_Type_ {
@@ -20,3 +23,5 @@ public:
 
     void addARun(Run r);
 };
+
+#endif /* _LSM_TREE_LEVEL_H_ */
