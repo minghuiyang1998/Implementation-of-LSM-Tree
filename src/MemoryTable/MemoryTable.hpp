@@ -7,10 +7,13 @@ private:
     map<int, Value> map;
 
 public:
-    Run clean();  // first generate an Run, save it in a file, then clear the map
-    void put();    // put a key in the map
+    std::map<int, Value> clean();  // first generate an Run, save it in a file, then clear the map
+    void insert(int key, Value val);    // put a key in the map
 
+    Value query(int key);
+    std::vector<Value> range_query(int min_key, int max_key);
     void save();  // save sstable in a file
-
-
+    int getMapSize() {
+        return map.size();
+    }
 };

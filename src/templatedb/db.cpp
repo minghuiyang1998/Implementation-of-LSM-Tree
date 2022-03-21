@@ -4,15 +4,30 @@ using namespace templatedb;
 
 Value DB::get(int key) {
     // 1. memoryTable search
+    Value res = memoryTable.query(key);
+    if (!res.items.empty()) {
+        return res;
+    }
     // 2. search in levels
+
     return Value(false);
 }
 
 void DB::put(int key, Value val) {
-    table[key] = val;
     // 1. put in memory table
-    // 2. check if mmtable need to be cleaned
-    // 3, clean() will return a Run and put this Run into the first level
+    memoryTable.insert(key, val);
+    if(memoryTable.getMapSize() > MMTableThreshold) {
+        // 2. check if memory-table need to be cleaned
+        std::map<int, Value> data = memoryTable.clean();
+        // TODO: create new run and add to first level
+        string id = "";
+        int level = 0;
+        std::fstream *f = nullptr;
+        Run newRun = Run(id, level, f, data);
+        //while (level != last level && level.overthreshold) {
+            // compact();
+        //}
+    }
 }
 
 
@@ -240,4 +255,12 @@ bool DB::write_to_file()
     }
 
     return true;
+}
+
+void DB::compactLeveling() {
+
+}
+
+void DB::compactTiering() {
+
 }

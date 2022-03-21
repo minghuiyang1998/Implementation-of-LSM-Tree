@@ -10,6 +10,8 @@ public:
     bool visible = true;
     long timestamp;
 
+    Value(){};
+
     Value(bool _visible) {
         timestamp = std::time(nullptr);
         visible = _visible;
