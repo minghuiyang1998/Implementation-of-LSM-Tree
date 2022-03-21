@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libBF.a CMakeFiles/BF.dir/src/Run/BloomFilter/BloomFilter.cpp.o CMakeFiles/BF.dir/src/Run/BloomFilter/murmurhash.cpp.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libBF.a
