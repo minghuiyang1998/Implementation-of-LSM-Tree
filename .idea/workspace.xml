@@ -22,8 +22,6 @@
   <component name="ChangeListManager">
     <list default="true" id="40dfa84d-d617-4453-a083-aff80c51a7e6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MemoryTable/MemoryTable.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/MemoryTable/MemoryTable.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MemoryTable/MemoryTable.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/MemoryTable/MemoryTable.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,6 +54,7 @@
     <property name="cmake.loaded.for.project" value="true" />
     <property name="ctest.advertisement.all.test.configuration.is.created" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/src/MemoryTable" />
+    <property name="nodejs_package_manager_path" value="npm" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -76,11 +75,6 @@
       </method>
     </configuration>
     <configuration name="BF" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="templatedb" TARGET_NAME="BF" CONFIG_NAME="Debug">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -154,7 +148,8 @@
       <option name="presentableId" value="Default" />
       <updated>1647815815726</updated>
       <workItem from="1647815818270" duration="4693000" />
-      <workItem from="1647889183864" duration="2734000" />
+      <workItem from="1647889183864" duration="3152000" />
+      <workItem from="1647893066293" duration="224000" />
     </task>
     <servers />
   </component>

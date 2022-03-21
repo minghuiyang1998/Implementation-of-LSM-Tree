@@ -14,62 +14,67 @@
 #include "../Level/Level.hpp"
 #include "../Levels/Levels.hpp"
 #include "../MemoryTable/MemoryTable.hpp"
+#include "../Run/Run.hpp"
 #include "../utils/Value.hpp"
 
-namespace templatedb {
+namespace templatedb
+{
 
-    typedef enum _status_code {
-        OPEN = 0,
-        CLOSED = 1,
-        ERROR_OPEN = 100,
-    } db_status;
+typedef enum _status_code
+{
+    OPEN = 0,
+    CLOSED = 1,
+    ERROR_OPEN = 100,
+} db_status;
 
-    class DB {
-        public:
-            db_status status;
 
-        DB();
 
-        Value get(int key);
-        void put(int key, Value val);
-        std::vector<Value> scan();
-        std::vector<Value> scan(int min_key, int max_key);
-        void del(int key);
-        void del(int min_key, int max_key);
-        void compactLeveling();
-        void compactTiering();
-        size_t size();
+class DB
+{
+public:
+    db_status status;
 
-        void init(std::string & fname);
-        db_status open(std::string & fname);
-        bool close();
-        bool load_data_file(std::string & fname);
-        std::vector<Value> execute_op(Operation op);
+    DB() {};
+    ~DB() {close();};
 
-        virtual ~DB();
+    Value get(int key);
+    void put(int key, Value val);
+    std::vector<Value> scan();
+    std::vector<Value> scan(int min_key, int max_key);
+    void del(int key);
+    void del(int min_key, int max_key);
+    void compactLeveling();
+    void compactTiering();
+    size_t size();
+    
+    db_status open(std::string & fname);
+    bool close();
 
-    private:
-            std::string db_name;
-            std::string manifest_file_name;
-            std::string sst_storage = "./storage/";
-            int curr_sst_number = 0;
-            int level_count;
-            int MMTableThreshold;
+    bool load_all_files();  
+    bool load_data_file(std::string & fname);
+    map<int, Value> load_data(std::string & fname);
 
-            Levels levels;
-            MemoryTable memoryTable;
+    std::vector<Value> execute_op(Operation op);
 
-            std::fstream file;
-            std::unordered_map<int, Value> table;
-            size_t value_dimensions = 0;
+private:
+    std::fstream file;
+    std::unordered_map<int, Value> table;
+    Levels levels;
+    MemoryTable memoryTable;
 
-            bool buildLevels(std::vector<int> levels);
-            bool load_all_sst();
-            std::vector<std::string> get_sst_list();
-            std::string make_filename(const std::string& name, uint64_t number, const char* suffix);
+    size_t value_dimensions = 0;
+    int totalLevels;
+    vector<int> levelsThreshold;
+    int mmtableThreshold;
 
-            bool write_to_file();
-    };
+
+    bool buildLevels();
+    
+    // int baseLevelSize;  // size of first leve
+    
+    bool write_to_file();
+};
+
 }   // namespace templatedb
 
 #endif /* _TEMPLATEDB_DB_H_ */

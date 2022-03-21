@@ -1,18 +1,34 @@
 #include "db.hpp"
+#include "../Run/Run.hpp"
 
 using namespace templatedb;
 
 Value DB::get(int key) {
     // 1. memoryTable search
+    Value res = memoryTable.query(key);
+    if (!res.items.empty()) {
+        return res;
+    }
     // 2. search in levels
+
     return Value(false);
 }
 
 void DB::put(int key, Value val) {
-    table[key] = val;
     // 1. put in memory table
-    // 2. check if mmtable need to be cleaned
-    // 3, clean() will return a Run and put this Run into the first level
+    memoryTable.insert(key, val);
+    if(memoryTable.getMapSize() > MMTableThreshold) {
+        // 2. check if memory-table need to be cleaned
+        std::map<int, Value> data = memoryTable.clean();
+        // TODO: create new run and add to first level
+        string id = "";
+        int level = 0;
+        std::fstream *f = nullptr;
+        Run newRun = Run(id, level, f, data);
+        //while (level != last level && level.overthreshold) {
+            // compact();
+        //}
+    }
 }
 
 
@@ -124,46 +140,116 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-// used in simple_benchmark.cpp
-bool DB::load_data_file(std::string & fname)
+bool DB::buildLevels() {
+    // first load config.txt
+    
+}
+
+bool DB::load_all_files() {
+
+} 
+
+bool DB::load_data_file(std::string & fname) // load a datafile, one file store one run
 {
+    // std::ifstream fid(fname);
+    // if (fid.is_open())
+    // {
+    //     int key;
+    //     int line_num = 0;
+    //     std::string line;
+    //     std::getline(fid, line); // First line is rows, col
+    //     while (std::getline(fid, line))
+    //     {
+    //         line_num++;
+    //         std::stringstream linestream(line);
+    //         std::string item;
+
+    //         std::getline(linestream, item, ' ');
+    //         std::string op_code = item;
+
+    //         std::getline(linestream, item, ' ');
+    //         key = stoi(item);
+    //         std::vector<int> items;
+    //         while(std::getline(linestream, item, ' '))
+    //         {
+    //             items.push_back(stoi(item));
+    //         }
+    //         this->put(key, Value(items));
+    //     }
+    // }
+    // else
+    // {
+    //     fprintf(stderr, "Unable to read %s\n", fname.c_str());
+    //     return false;
+    // }
     std::ifstream fid(fname);
-    if (fid.is_open())
-    {
-        int key;
-        int line_num = 0;
-        std::string line;
-        std::getline(fid, line); // First line is rows, col
-        while (std::getline(fid, line))
-        {
-            line_num++;
-            std::stringstream linestream(line);
-            std::string item;
+    if(fid.is_open()) {
+        std::string readLine;
+        std::getline(fid, readLine);
+        int l_num = stoi(readLine);
+        std::getline(fid, readLine);
+        int size = stoi(readLine);
 
-            std::getline(linestream, item, ' ');
-            std::string op_code = item;
+        Run r = Run(); // TODO: need to wirte constructors and pass arguments late
+        map<int, Value> data = load_data(fname);
+        // TODO: generate bloom filter here
+        // TODO: generate fence pointer here
 
-            std::getline(linestream, item, ' ');
-            key = stoi(item);
-            std::vector<int> items;
-            while(std::getline(linestream, item, ' '))
-            {
-                items.push_back(stoi(item));
-            }
-            this->put(key, Value(items));
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Unable to read %s\n", fname.c_str());
+        Level level = this->levels.getLevelVector(l_num);
+        level.addARun(r);
+    } else {
+        fprintf(stderr, "Unable to read run file %s", fname.c_str());
         return false;
     }
-
     return true;
 }
 
-// used in persistence_test.cpp && simple_benchmark.cpp
-db_status DB::open(std::string & fname)
+bool parsebool(std::string str) {
+    if(str == "true") return true;
+    else return false;
+}
+
+map<int, Value> DB::load_data(std::string & fname) {
+    std::ifstream fid(fname);
+    std::string readLine;
+    map<int, Value> ret;
+    int linecount = 0;
+    if(fid.is_open()) {
+        while(std::getline(fid, readLine)) {
+            int key, timestamp;
+            bool visible, tombstone;
+            vector<int> items = vector<int>();
+            if(linecount == 0 || linecount == 1) continue;  // skip first two rows
+            std::stringstream valuestream(readLine);
+            std::string str;
+            int itemcount = 0;
+            while(std::getline(valuestream, str, ',')) {
+                if(itemcount == 0) key = stoi(str);
+                else if(itemcount == 1) {
+                    visible = parsebool(str);
+                }
+                else if (itemcount == 2) timestamp = stoi(str);
+                else if(itemcount == 3) {
+                    tombstone = parsebool(str);
+                }
+                else {
+                    items.push_back(stoi(str));
+                }
+                itemcount++;
+            }
+            linecount++;
+            Value v = Value(visible, timestamp, tombstone, items);
+            ret[key] = v;
+        }
+    } else {
+        fprintf(stderr, "Unable to read run file %s", fname.c_str());
+    }
+    return ret;
+}
+
+
+
+db_status DB::open(std::string & fname)    // open config.txt, set initial attributes
 {
     this->file.open(fname, std::ios::in | std::ios::out);
     if (file.is_open())
@@ -173,25 +259,48 @@ db_status DB::open(std::string & fname)
         if (file.peek() == std::ifstream::traits_type::eof())
             return this->status;
 
-        int key;
-        std::string line;
-        std::getline(file, line); // First line is rows, col
-        while (std::getline(file, line))
-        {
-            std::stringstream linestream(line);
-            std::string item;
+        // read total number of levels
+        std::string readLine;
+        std::getline(file, readLine); // First line is 4
+        this->totalLevels = stoi(readLine);
+        this->levels = Levels(this->totalLevels);
 
-            std::getline(linestream, item, ',');
-            key = stoi(item);
-            std::vector<int> items;
-            while(std::getline(linestream, item, ','))
-            {
-                items.push_back(stoi(item));
-            }
-            this->put(key, Value(items));
-            if (value_dimensions == 0)
-                value_dimensions = items.size();
+        // read threshold for every level
+        std::getline(file, readLine); // Second line is 1,3,5
+        std::stringstream levelstream(readLine);
+        std::string levelThresholdStr;
+        this->levelsThreshold = vector<int>(this->totalLevels-1);
+        while(std::getline(levelstream, levelThresholdStr, ',')) {
+            this->levelsThreshold.push_back(stoi(levelThresholdStr));
         }
+
+        // read mmtablethreshold
+        std::getline(file, readLine); // First line is 50
+        this->mmtableThreshold = stoi(readLine);
+
+        // construct all levels
+        for(int i = 0; i < this->totalLevels; i++) {
+            Level newLevel = Level(i, this->levelsThreshold[i]);
+            this->levels.setLevel(i, newLevel);
+        }
+
+
+        // while (std::getline(file, line))
+        // {
+        //     std::stringstream linestream(line);
+        //     std::string item;
+
+        //     std::getline(linestream, item, ',');
+        //     key = stoi(item);
+        //     std::vector<int> items;
+        //     while(std::getline(linestream, item, ','))
+        //     {
+        //         items.push_back(stoi(item));
+        //     }
+        //     this->put(key, Value(items));
+        //     if (value_dimensions == 0)
+        //         value_dimensions = items.size();
+        // }
     }
     else if (!file) // File does not exist
     {
@@ -240,4 +349,12 @@ bool DB::write_to_file()
     }
 
     return true;
+}
+
+void DB::compactLeveling() {
+
+}
+
+void DB::compactTiering() {
+
 }
