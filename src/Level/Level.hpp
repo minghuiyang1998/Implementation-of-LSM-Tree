@@ -17,7 +17,13 @@ public:
     ~Level();
 
     void addARun(Run r);
-    void removeARun();
+    Run removeARun();
+    Run getARun(int index);
+
+    int getThreshold() const;
+
+    int size();
+    void
 };
 
 #endif /* _LSM_TREE_LEVEL_H_ */

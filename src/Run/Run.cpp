@@ -35,8 +35,7 @@ std::vector<Value> Run::range_query(int min_key, int max_key) {
     return results;
 }
 
-Run::Run(string id, int level, std::string filePath, const std::map<int, Value>& map) {
-    this->id = id;
+Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& map) {
     this->level = level;
     this->filePath = filePath;
     for (const auto& element : map) {

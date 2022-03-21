@@ -13,16 +13,17 @@ class Run {
         BF::BloomFilter bloomFilter;
         FencePointer fencePointer;
         std::string filePath;
-        string id;
-        int size;
         int level;
         bool isInBloomFilter(int key);
         bool isInFencePointer(int key);
-        std::map<int, Value> readDisk();
     public:
-        Run(string id, int level, std::string filePath, const std::map<int, Value>& map);
+        Run(int size, int level, std::string filePath, const std::map<int, Value>& map);
         Value query(int key);
         std::vector<Value> range_query(int min_key, int max_key);
+        std::map<int, Value> readDisk();
+
+//        string id;
+        int size;
 };
 #endif /* LSM_TREE_SST_H */
 

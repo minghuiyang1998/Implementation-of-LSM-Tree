@@ -28,10 +28,10 @@ void DB::put(int key, Value val) {
         std::string path;
         // Run newRun = Run(id, level, f, data);
         // add new run to level
-        if(compactionType == CompactionType.Leveling) {
-            compactLeveling();
+        if(compactionType == Leveling) {
+//            compactLeveling(newRun);
         } else {
-            compactTiering();
+//            compactTiering(newRun);
         }
     }
 }
@@ -57,11 +57,6 @@ void DB::del(int min_key, int max_key) {
             ++it;
         }
     }
-}
-
-
-DB::~DB() {
-    close();
 }
 
 // bool DB::buildLevels(std::vector<int> levels) {
@@ -336,10 +331,61 @@ bool DB::write_to_file()
     return true;
 }
 
-void DB::compactLeveling() {
+void DB::compactLeveling(Run run) {
+    int curr = 1;
+    while (curr <= levels.getTotalSize()) {
+        Level curr_level = levels.getLevelVector(curr);
+        if (curr_level.size() == 0) {
+            curr_level.addARun(run);
+            break;
+        } else { //number of run == 1
+            Run temp = curr_level.removeARun();
+            std::map<int, Value> temp_data = temp.readDisk();
+            std::map<int, Value> run_data = run.readDisk();
+            std::map<int, Value> res;
+            for (const auto& element : run_data) {
+                int key = element.first;
+                Value val = element.second;
+                if (val.visible) {
+                    temp_data[key] = val;
+                } else {
+                    // TODO: merge
+                }
+            }
+
+            // TODO: path = write_to_file(res);
+            int run_size = res.size();
+            Run newRun = Run(run_size, "", curr, "", res);
+            curr_level.addARun(newRun);
+
+            if (run_size <= curr_level.getThreshold()
+            || curr_level.getThreshold() <= -1) {
+                break;
+            }
+        }
+        curr += 1;
+    }
 
 }
 
-void DB::compactTiering() {
+void DB::compactTiering(Run run) {
+    int curr = 1;
+    Level curr_level = levels.getLevelVector(curr);
+    curr_level.addARun(run);
+    while (curr_level.size() > curr_level.getThreshold()
+    || curr_level.getThreshold() <= -1) {
+        std::map<int, Value> res;
+        for (int i = 0; i < curr_level.size(); i++) {
+            Run curr = curr_level.getARun(i);
+            std::map<int, Value> curr_map = curr.readDisk();
+            // TODO: merge to res
+        }
 
+        // TODO: path = write_to_file(res);
+        int run_size = res.size();
+        Run newRun = Run(run_size, "", curr, "", res);
+        levels.getLevelVector(curr + 1).addARun(newRun);
+        curr += 1;
+        curr_level = levels.getLevelVector(curr);
+    }
 }

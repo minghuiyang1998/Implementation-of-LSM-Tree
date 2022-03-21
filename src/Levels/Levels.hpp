@@ -15,6 +15,8 @@ public:
 
     void setLevel(int num, Level l);
     Level getLevelVector(int l);
+
+    int getTotalSize() const;
 };
 
 #endif /* _LSM_TREE_LEVELS_H_ */
