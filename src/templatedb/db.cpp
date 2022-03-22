@@ -15,23 +15,25 @@ Value DB::get(int key) {
 }
 
 void DB::put(int key, Value val) {
-    // 1. put in memory table
     // TODO: fullfill all the attriutes in val
+    val.setTimestamp(timestamp + 1);
+    timestamp += 1;
+    // 1. put in memory table
     memoryTable.insert(key, val);
     if(memoryTable.getMapSize() > mmtableThreshold) {
         // 2. check if memory-table need to be cleaned
         std::map<int, Value> data = memoryTable.clean();
         // TODO: create new run and add to first level, create a new file
         // constructor
-        string id = "";
+        int size = 0;
         int level = 1;
         std::string path;
-        // Run newRun = Run(id, level, f, data);
+        Run newRun = Run(size, level, path, data);
         // add new run to level
         if(compactionType == Leveling) {
-//            compactLeveling(newRun);
+            compactLeveling(newRun);
         } else {
-//            compactTiering(newRun);
+            compactTiering(newRun);
         }
     }
 }
@@ -46,7 +48,8 @@ std::vector<Value> DB::scan(int min_key, int max_key) {
 
 void DB::del(int key) {
     // create new value with visible = false
-    // put(key, value)
+    Value val = Value(false);
+    put(key, val);
 }
 
 void DB::del(int min_key, int max_key) {
@@ -169,7 +172,7 @@ bool DB::load_data_file(std::string & fname) // load a datafile, one file store 
         int size = stoi(readLine);
         map<int, Value> data = load_data(fname);
 
-        Run r = Run("", l_num, fname, data); // TODO: need to wirte constructors and pass arguments late
+        Run r = Run(size, l_num, fname, data); // TODO: need to wirte constructors and pass arguments late
         
         Level level = this->levels.getLevelVector(l_num);
         level.addARun(r);
@@ -340,13 +343,18 @@ void DB::compactLeveling(Run run) {
             break;
         } else { //number of run == 1
             Run temp = curr_level.removeARun();
-            std::map<int, Value> temp_data = temp.readDisk();
+            std::map<int, Value> temp_data = temp.readDisk(); // previous
             std::map<int, Value> run_data = run.readDisk();
+            // TODO: delete temp_data from disk
+
+            // 后面的value覆盖前面的value
             std::map<int, Value> res;
-            for (const auto& element : run_data) {
+            for (const auto& element : run_data) { // use new_data override prev_data
                 int key = element.first;
                 Value val = element.second;
-                if (val.visible) {
+
+                // tombstone:Pass it to the bottom and make sure everything before this time point is deleted
+                if (!val.visible) {
                     temp_data[key] = val;
                 } else {
                     // TODO: merge
@@ -378,6 +386,7 @@ void DB::compactTiering(Run run) {
         for (int i = 0; i < curr_level.size(); i++) {
             Run curr = curr_level.getARun(i);
             std::map<int, Value> curr_map = curr.readDisk();
+            // TODO: delete temp_data from disk
             // TODO: merge to res
         }
 

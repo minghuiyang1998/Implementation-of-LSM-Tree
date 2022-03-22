@@ -25,8 +25,17 @@ public:
     void setTimestamp(int _timestamp) {
         timestamp = _timestamp;
     }
+
     void setVisible(bool _visible) {
         visible = _visible;
+    }
+
+    long getTimestamp() const {
+        return timestamp;
+    }
+
+    bool isVisible() const {
+        return visible;
     }
 };
 

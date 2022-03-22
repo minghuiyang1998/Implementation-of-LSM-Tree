@@ -21,8 +21,6 @@ class Run {
         Value query(int key);
         std::vector<Value> range_query(int min_key, int max_key);
         std::map<int, Value> readDisk();
-
-//        string id;
         int size;
 };
 #endif /* LSM_TREE_SST_H */

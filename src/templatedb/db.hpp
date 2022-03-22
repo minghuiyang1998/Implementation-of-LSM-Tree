@@ -70,6 +70,7 @@ private:
     size_t value_dimensions = 0;
     int totalLevels;
     int generatorCount;  //TODO:
+    int timestamp = 0;
     vector<int> levelsThreshold;
     int mmtableThreshold;
 
