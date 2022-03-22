@@ -26,11 +26,9 @@ void DB::put(int key, Value val) {
         // TODO: create new run and add to first level, create a new file
         int size = data.size();
         int level = 1;
-        std::string filepath;
-        sprintf(filepath, "../../Storage/Data/%d.txt", generatorCount);
-        generatorCount++;
+
+        std::string filepath = write_to_file(level, size, data);
         Run newRun = Run(size, level, filepath, data);
-        write_to_file(level, size, filepath, data);
 
         // add new run to level
         if(compactionType == Leveling) {
@@ -41,8 +39,12 @@ void DB::put(int key, Value val) {
     }
 }
 
-bool DB::write_to_file(int level, int size, std::string filepath, std::map<int, Value> data) {
+std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
+    std::string filepath;
+    sprintf(filepath, "../../Storage/Data/%d.txt", generatorCount);
+    generatorCount++;
     std::ofstream file(filepath);
+
     std::string writeLine;
     // write first row, level
     writeLine = to_string(level);
@@ -70,6 +72,7 @@ bool DB::write_to_file(int level, int size, std::string filepath, std::map<int, 
 
         file << writeLine << endl; // write a key/value row
     }
+    return filepath;
 }
 
 
@@ -332,7 +335,7 @@ bool DB::close()
     //
     if (file.is_open())
     {
-        this->write_to_file();
+//        this->write_to_file();  // TODO: check here again
         file.close();
     }
     this->status = CLOSED;

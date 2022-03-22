@@ -56,7 +56,7 @@ public:
 
     bool load_all_files();  
     bool load_data_file(std::string & fname);
-    bool write_to_file(int level, int size, std::string filepath, std::map<int, Value> data);
+    std::string write_to_file(int level, int size, std::map<int, Value> data);
 
     map<int, Value> load_data(std::string & fname);
 
@@ -88,16 +88,3 @@ private:
 }   // namespace templatedb
 
 #endif /* _TEMPLATEDB_DB_H_ */
-
-
-/**
- * @brief format of Run
- * metaData:
- * bloomfilter: vector<bool>
- * fence pointer: min, max
- * 
- * Data:
- * key1, [value1], timestamp, tombstone
- * key2, [value2], timestamp, tombstone 
- * ...
- */
