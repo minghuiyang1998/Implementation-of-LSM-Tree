@@ -36,3 +36,7 @@ void Level::cleanAllRuns() {
     runs.clear();
 }
 
+int Level::getLevelNum() const {
+    return levelNum;
+}
+

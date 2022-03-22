@@ -8,6 +8,7 @@
 using namespace templatedb;
 class Level {
 private: 
+    int levelNum;
     int threshold;
     vector<Run> runs;
 public:
@@ -21,6 +22,8 @@ public:
     void cleanAllRuns();
     int getThreshold() const;
     int size();
+
+    int getLevelNum() const;
 };
 
 #endif /* _LSM_TREE_LEVEL_H_ */
