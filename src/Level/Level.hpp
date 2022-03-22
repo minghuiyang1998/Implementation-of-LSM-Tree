@@ -19,11 +19,14 @@ public:
     void addARun(Run r);
     Run removeARun();
     Run getARun(int index);
+    void cleanAllRuns();
 
     int getThreshold() const;
 
     int size();
     void
+
+    void clean();
 };
 
 #endif /* _LSM_TREE_LEVEL_H_ */

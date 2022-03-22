@@ -15,7 +15,7 @@ Value DB::get(int key) {
 }
 
 void DB::put(int key, Value val) {
-    // TODO: fullfill all the attriutes in val
+    // fullfill all the attriutes in val
     val.setTimestamp(timestamp + 1);
     timestamp += 1;
     // 1. put in memory table
@@ -380,7 +380,7 @@ void DB::compactTiering(Run run) {
         std::map<int, Value> res;
         // from old to new, new run always inserted to the end of the level
         for (int i = 0; i < curr_level.size(); i++) {
-            Run curr = curr_level.getARun(i);
+            Run curr = curr_level.getARun(i); // not delete at this time
             std::map<int, Value> curr_map = curr.readDisk();
             for (const auto& element : curr_map) { // use new_data override prev_data
                 int key = element.first;
@@ -392,6 +392,8 @@ void DB::compactTiering(Run run) {
             }
         }
 
+        // clean all after merge all sst in this level
+        curr_level.cleanAllRuns();
         // TODO: delete sst of temp from disk
         // TODO: path = write_to_file(res);
         int run_size = res.size();
