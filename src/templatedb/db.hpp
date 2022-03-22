@@ -9,6 +9,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <stdio.h>
 
 #include "operation.hpp"
 #include "../Level/Level.hpp"

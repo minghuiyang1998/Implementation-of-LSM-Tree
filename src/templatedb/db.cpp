@@ -1,5 +1,6 @@
 #include "db.hpp"
 #include "../Run/Run.hpp"
+#include <stdio.h>
 
 using namespace templatedb;
 
@@ -41,7 +42,9 @@ void DB::put(int key, Value val) {
 
 std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
     std::string filepath;
-    sprintf(filepath, "../../Storage/Data/%d.txt", generatorCount);
+    filepath = "../../Storage/Data/";
+    filepath += to_string(generatorCount);
+    filepath += ".txt";
     generatorCount++;
     std::ofstream file(filepath);
 
@@ -113,17 +116,17 @@ void DB::del(int min_key, int max_key) {
 
  std::vector<std::string> DB::get_file_list() {
      std::vector<std::string> res;
-     for (const auto & entry : std::__fs::filesystem::directory_iterator("../../Storage/Data"));
-         res.push_back(entry.path());
+     for (const auto & entry : std::filesystem::directory_iterator("../../Storage/Data"));  // TODO: not sure if C++17 could be used here
+        res.push_back(entry.path());
  }
 
- std::string DB::make_filename(const std::string& name,
-                          uint64_t number,
-                          const char* suffix) {
-     char buf[100];
-     snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
-     return name + buf;
- }
+//  std::string DB::make_filename(const std::string& name,
+//                           uint64_t number,
+//                           const char* suffix) {
+//      char buf[100];
+//      snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
+//      return name + buf;
+//  }
 
 size_t DB::size() {
     return table.size();
@@ -310,8 +313,8 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
 
         // get all the runs file path and load runs in memory
         vector<std::string> allFilePath = get_file_list();
-        while(std::string s: allFilePath) {
-            loed_data_file(s);
+        for(std::string s: allFilePath) {
+            load_data_file(s);
         }
     }
     else if (!file) // File does not exist

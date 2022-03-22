@@ -8,6 +8,7 @@
 using namespace templatedb;
 class Level {
 private: 
+    int levelNum;
     int threshold;
     vector<Run> runs;
 public:

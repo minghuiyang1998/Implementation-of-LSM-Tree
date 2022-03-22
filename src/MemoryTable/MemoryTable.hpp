@@ -7,9 +7,7 @@ private:
     map<int, Value> map;
 
 public:
-    MemoryTable(){
-        this->map = map<int, Value> myMap;
-    }
+    MemoryTable(){ }
     ~MemoryTable() = default;
 
     MemoryTable(const MemoryTable&) = delete;
