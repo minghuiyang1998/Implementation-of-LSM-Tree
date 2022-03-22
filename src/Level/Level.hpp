@@ -8,7 +8,6 @@
 using namespace templatedb;
 class Level {
 private: 
-    int levelNum;
     int threshold;
     vector<Run> runs;
 public:
@@ -19,9 +18,8 @@ public:
     void addARun(Run r);
     Run removeARun();
     Run getARun(int index);
-
+    void cleanAllRuns();
     int getThreshold() const;
-
     int size();
 };
 
