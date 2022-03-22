@@ -8,7 +8,6 @@
 using namespace templatedb;
 class Level {
 private: 
-    int levelNum;
     int threshold;
     vector<Run> runs;
 public:
@@ -20,13 +19,8 @@ public:
     Run removeARun();
     Run getARun(int index);
     void cleanAllRuns();
-
     int getThreshold() const;
-
     int size();
-    void
-
-    void clean();
 };
 
 #endif /* _LSM_TREE_LEVEL_H_ */
