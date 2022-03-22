@@ -24,17 +24,51 @@ void DB::put(int key, Value val) {
         // 2. check if memory-table need to be cleaned
         std::map<int, Value> data = memoryTable.clean();
         // TODO: create new run and add to first level, create a new file
-        // constructor
-        int size = 0;
+        int size = data.size();
         int level = 1;
-        std::string path;
-        Run newRun = Run(size, level, path, data);
+        std::string filepath;
+        sprintf(filepath, "../../Storage/Data/%d.txt", generatorCount);
+        generatorCount++;
+        Run newRun = Run(size, level, filepath, data);
+        write_to_file(level, size, filepath, data);
+
         // add new run to level
         if(compactionType == Leveling) {
             compactLeveling(newRun);
         } else {
             compactTiering(newRun);
         }
+    }
+}
+
+bool DB::write_to_file(int level, int size, std::string filepath, std::map<int, Value> data) {
+    std::ofstream file(filepath);
+    std::string writeLine;
+    // write first row, level
+    writeLine = to_string(level);
+    file << writeLine << endl;
+    // write second row, size
+    writeLine = to_string(size);
+    file << writeLine << endl;
+    for(auto iter: data) {
+        writeLine = "";
+        writeLine += to_string(iter.first);  // key
+        Value v = iter.second;
+        bool visible = v.visible;
+        if(visible) writeLine += ",true";
+        else writeLine += ",false";
+
+        int timestamp = v.timestamp;
+        writeLine += ",";
+        writeLine += to_string(timestamp);
+
+        std::vector<int> items = v.items;
+        for(auto i: items) {
+            writeLine += ",";
+            writeLine += to_string(i);
+        }
+
+        file << writeLine << endl; // write a key/value row
     }
 }
 
@@ -70,24 +104,23 @@ void DB::del(int min_key, int max_key) {
 // bool DB::load_all_sst() {
 //     std::vector<std::string> sstList = get_sst_list();
 //     for (auto sst_file : sstList) {
-//         // TODO: new SST with config and data(for bloom filter and fence pointer
 //     }
 //     return false;
 // }
 
-// std::vector<std::string> DB::get_sst_list() {
-//     std::vector<std::string> res;
-//     for (const auto & entry : std::__fs::filesystem::directory_iterator(sst_storage))
-//         res.push_back(entry.path());
-// }
+ std::vector<std::string> DB::get_file_list() {
+     std::vector<std::string> res;
+     for (const auto & entry : std::__fs::filesystem::directory_iterator("../../Storage/Data"));
+         res.push_back(entry.path());
+ }
 
-// std::string DB::make_filename(const std::string& name,
-//                          uint64_t number,
-//                          const char* suffix) {
-//     char buf[100];
-//     snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
-//     return name + buf;
-// }
+ std::string DB::make_filename(const std::string& name,
+                          uint64_t number,
+                          const char* suffix) {
+     char buf[100];
+     snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
+     return name + buf;
+ }
 
 size_t DB::size() {
     return table.size();
@@ -198,7 +231,10 @@ map<int, Value> DB::load_data(std::string & fname) {
             int key, timestamp;
             bool visible;
             vector<int> items = vector<int>();
-            if(linecount == 0 || linecount == 1) continue;  // skip first two rows
+            if(linecount == 0 || linecount == 1) {
+                linecount++;
+                continue;  // skip first two rows
+            }
             std::stringstream valuestream(readLine);
             std::string str;
             int itemcount = 0;
@@ -269,17 +305,10 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
             this->levels.setLevel(i, newLevel);
         }
 
-        // get all the runs file path ()
-        std::fstream fileDirectory("filepath");  // TODO: file path
-        std::string eachFilePath;
-
-        if(fileDirectory.is_open()) {
-            while(std::getline(fileDirectory, eachFilePath)) {
-                load_data_file(eachFilePath);
-            }
-        } else {
-            fileDirectory.close();
-            this->status = ERROR_OPEN;
+        // get all the runs file path and load runs in memory
+        vector<std::string> allFilePath = get_file_list();
+        while(std::string s: allFilePath) {
+            loed_data_file(s);
         }
     }
     else if (!file) // File does not exist
@@ -307,26 +336,6 @@ bool DB::close()
         file.close();
     }
     this->status = CLOSED;
-
-    return true;
-}
-
-
-bool DB::write_to_file()
-{
-    file.clear();
-    file.seekg(0, std::ios::beg);
-
-    std::string header = std::to_string(table.size()) + ',' + std::to_string(value_dimensions) + '\n';
-    file << header;
-    for(auto item: table)
-    {
-        std::ostringstream line;
-        std::copy(item.second.items.begin(), item.second.items.end() - 1, std::ostream_iterator<int>(line, ","));
-        line << item.second.items.back();
-        std::string value(line.str());
-        file << item.first << ',' << value << '\n';
-    }
 
     return true;
 }

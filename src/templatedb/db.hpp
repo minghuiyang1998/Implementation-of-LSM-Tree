@@ -56,6 +56,8 @@ public:
 
     bool load_all_files();  
     bool load_data_file(std::string & fname);
+    bool write_to_file(int level, int size, std::string filepath, std::map<int, Value> data);
+
     map<int, Value> load_data(std::string & fname);
 
     std::vector<Value> execute_op(Operation op);
@@ -69,7 +71,7 @@ private:
 
     size_t value_dimensions = 0;
     int totalLevels;
-    int generatorCount;  //TODO:
+    int generatorCount;
     int timestamp = 0;
     vector<int> levelsThreshold;
     int mmtableThreshold;
@@ -79,7 +81,8 @@ private:
     
     // int baseLevelSize;  // size of first leve
     
-    bool write_to_file();
+
+    std::vector<std::string> get_file_list();
 };
 
 }   // namespace templatedb
