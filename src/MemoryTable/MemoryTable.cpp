@@ -26,10 +26,16 @@ Value MemoryTable::query(int key) {
     if (iter != map.end())
         return iter->second;
     else
-        return nullptr; //需要商量一下没找到的话要返回什么
+        return {}; //需要商量一下没找到的话要返回什么
 }
 
 vector<Value> MemoryTable::rangeQuery(int key_low, int key_high) {
+
+    auto low_position = std::lower_bound(map.begin(), map.end(), key_low);
+    auto high_position = std::upper_bound(map.begin(), map.end(), key_high);
+    // The range we need is  [low, high)
+    std::vector::vector<Value> nums(low_position, high_position);
+    return nums;
 
 }
 
