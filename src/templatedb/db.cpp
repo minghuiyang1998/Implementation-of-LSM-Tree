@@ -172,7 +172,7 @@ bool DB::load_data_file(std::string & fname) // load a datafile, one file store 
         int size = stoi(readLine);
         map<int, Value> data = load_data(fname);
 
-        Run r = Run(size, l_num, fname, data); // TODO: need to wirte constructors and pass arguments late
+        Run r = Run(size, l_num, fname, data);
         
         Level level = this->levels.getLevelVector(l_num);
         level.addARun(r);
@@ -254,36 +254,33 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
         std::getline(file, readLine); // Third line is 50
         this->mmtableThreshold = stoi(readLine);
 
+        // read compaction type
+        std::getline(file, readLine);
+        if(readLine == "Leveling") this->compactionType = Leveling;
+        else if(readLine == "Tiering") this->compactionType = Tiering;
+
+        // read generator count
+        std::getline(file, readLine);
+        this->generatorCount = stoi(readLine);
+
         // construct all levels
         for(int i = 0; i < this->totalLevels; i++) {
             Level newLevel = Level(i, this->levelsThreshold[i]);
             this->levels.setLevel(i, newLevel);
         }
 
-        // TODO: read compaction type
+        // get all the runs file path ()
+        std::fstream fileDirectory("filepath");  // TODO: file path
+        std::string eachFilePath;
 
-        // TODO: read generator count
-
-
-        // while (std::getline(file, line))
-        // {
-        //     std::stringstream linestream(line);
-        //     std::string item;
-
-        //     std::getline(linestream, item, ',');
-        //     key = stoi(item);
-        //     std::vector<int> items;
-        //     while(std::getline(linestream, item, ','))
-        //     {
-        //         items.push_back(stoi(item));
-        //     }
-        //     this->put(key, Value(items));
-        //     if (value_dimensions == 0)
-        //         value_dimensions = items.size();
-        // }
-
-        //TODO: get all the runs file path ()
-        //TODO: while() {load_data_file}
+        if(fileDirectory.is_open()) {
+            while(std::getline(fileDirectory, eachFilePath)) {
+                load_data_file(eachFilePath);
+            }
+        } else {
+            fileDirectory.close();
+            this->status = ERROR_OPEN;
+        }
     }
     else if (!file) // File does not exist
     {

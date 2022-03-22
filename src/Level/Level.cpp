@@ -28,6 +28,6 @@ int Level::getThreshold() const {
 }
 
 Run Level::getARun(int index) {
-    //TODO:
+    return runs[index];
 }
 

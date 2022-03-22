@@ -23,7 +23,6 @@ public:
     int getThreshold() const;
 
     int size();
-    void
 };
 
 #endif /* _LSM_TREE_LEVEL_H_ */
