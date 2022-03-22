@@ -343,27 +343,22 @@ void DB::compactLeveling(Run run) {
             break;
         } else { //number of run == 1
             Run temp = curr_level.removeARun();
-            std::map<int, Value> temp_data = temp.readDisk(); // previous
+            std::map<int, Value> res = temp.readDisk(); // previous
             std::map<int, Value> run_data = run.readDisk();
-            // TODO: delete temp_data from disk
 
-            // 后面的value覆盖前面的value
-            std::map<int, Value> res;
             for (const auto& element : run_data) { // use new_data override prev_data
                 int key = element.first;
                 Value val = element.second;
-
-                // tombstone:Pass it to the bottom and make sure everything before this time point is deleted
-                if (!val.visible) {
-                    temp_data[key] = val;
-                } else {
-                    // TODO: merge
-                }
+                // exist key, override directly
+                // exist: if it is tombstone: Pass it to the bottom and make sure everything before this time point is deleted
+                // no exist key, push
+                res[key] = val;
             }
 
+            // TODO: delete sst of temp from disk
             // TODO: path = write_to_file(res);
             int run_size = res.size();
-            Run newRun = Run(run_size, "", curr, "", res);
+            Run newRun = Run(run_size, curr, "", res);
             curr_level.addARun(newRun);
 
             if (run_size <= curr_level.getThreshold()
@@ -383,16 +378,24 @@ void DB::compactTiering(Run run) {
     while (curr_level.size() > curr_level.getThreshold()
     || curr_level.getThreshold() <= -1) {
         std::map<int, Value> res;
+        // from old to new, new run always inserted to the end of the level
         for (int i = 0; i < curr_level.size(); i++) {
             Run curr = curr_level.getARun(i);
             std::map<int, Value> curr_map = curr.readDisk();
-            // TODO: delete temp_data from disk
-            // TODO: merge to res
+            for (const auto& element : curr_map) { // use new_data override prev_data
+                int key = element.first;
+                Value val = element.second;
+                // exist key, override directly
+                // exist: if it is tombstone: Pass it to the bottom and make sure everything before this time point is deleted
+                // no exist key, push
+                res[key] = val;
+            }
         }
 
+        // TODO: delete sst of temp from disk
         // TODO: path = write_to_file(res);
         int run_size = res.size();
-        Run newRun = Run(run_size, "", curr, "", res);
+        Run newRun = Run(run_size, curr, "", res);
         levels.getLevelVector(curr + 1).addARun(newRun);
         curr += 1;
         curr_level = levels.getLevelVector(curr);
