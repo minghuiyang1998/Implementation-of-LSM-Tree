@@ -3,6 +3,14 @@ project(templatedb VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 11)
 
 set(templatedb_lib
+    src/utils/Value.hpp
+    src/Run/BloomFilter/BloomFilter.cpp
+    src/Run/BloomFilter/murmurhash.cpp
+    src/Run/FencePointer.hpp
+    src/Run/Run.cpp
+    src/Level/Level.cpp
+    src/Levels/Levels.cpp
+    src/MemoryTable/MemoryTable.cpp
     src/templatedb/db.cpp
     src/templatedb/operation.cpp
 )

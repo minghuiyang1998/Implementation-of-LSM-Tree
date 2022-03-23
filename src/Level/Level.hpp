@@ -5,7 +5,6 @@
 #include "../templatedb/db.hpp"
 #include <vector>
 
-using namespace templatedb;
 class Level {
 private: 
     int levelNum;

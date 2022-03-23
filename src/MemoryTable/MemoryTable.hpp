@@ -9,9 +9,6 @@ class MemoryTable {
 private:
     map<int, Value> map;
 public:
-    MemoryTable(){ }
-    ~MemoryTable() = default;
-
     /**
      * return the map and then clear it
      * @return
