@@ -19,10 +19,10 @@ void DB::put(int key, Value val) {
     val.setTimestamp(timestamp + 1);
     timestamp += 1;
     // 1. put in memory table
-    memoryTable.insert(key, val);
+    memoryTable.put(key, val);
     if(memoryTable.getMapSize() > mmtableThreshold) {
         // 2. check if memory-table need to be cleaned
-        std::map<int, Value> data = memoryTable.clean();
+        std::map<int, Value> data = memoryTable.clear();
         // TODO: create new run and add to first level, create a new file
         // constructor
         int size = 0;
