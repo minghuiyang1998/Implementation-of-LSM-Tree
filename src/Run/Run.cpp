@@ -52,4 +52,17 @@ std::map<int, Value> Run::readDisk() {
     return {};
 }
 
+const string &Run::getFilePath() const {
+    return filePath;
+}
+
+int Run::getLevel() const {
+    return level;
+}
+
+int Run::getSize() const {
+    return size;
+}
+
+
 

@@ -20,10 +20,10 @@ void DB::put(int key, Value val) {
     val.setTimestamp(timestamp + 1);
     timestamp += 1;
     // 1. put in memory table
-    memoryTable.insert(key, val);
+    memoryTable.put(key, val);
     if(memoryTable.getMapSize() > mmtableThreshold) {
         // 2. check if memory-table need to be cleaned
-        std::map<int, Value> data = memoryTable.clean();
+        std::map<int, Value> data = memoryTable.clear();
         // TODO: create new run and add to first level, create a new file
         int size = data.size();
         int level = 1;
@@ -367,13 +367,15 @@ void DB::compactLeveling(Run run) {
                 res[key] = val;
             }
 
+            std::string deleted_path = temp.getFilePath();
             // TODO: delete sst of temp from disk
+            int r_level = curr;
+            int r_size = res.size();
             // TODO: path = write_to_file(res);
-            int run_size = res.size();
-            Run newRun = Run(run_size, curr, "", res);
+            Run newRun = Run(r_size, r_level, "", res);
             curr_level.addARun(newRun);
 
-            if (run_size <= curr_level.getThreshold()
+            if (r_size <= curr_level.getThreshold()
             || curr_level.getThreshold() <= -1) {
                 break;
             }
@@ -405,12 +407,13 @@ void DB::compactTiering(Run run) {
         }
 
         // clean all after merge all sst in this level
-        curr_level.cleanAllRuns();
-        // TODO: delete sst of temp from disk
+        std::vector<std::string> deleted_paths = curr_level.cleanAllRuns();
+        // TODO: delete all sst from disk
+        int r_level = curr + 1;
+        int r_size = res.size();
         // TODO: path = write_to_file(res);
-        int run_size = res.size();
-        Run newRun = Run(run_size, curr, "", res);
-        levels.getLevelVector(curr + 1).addARun(newRun);
+        Run newRun = Run(r_size, r_level, "", res);
+        levels.getLevelVector(r_level).addARun(newRun);
         curr += 1;
         curr_level = levels.getLevelVector(curr);
     }

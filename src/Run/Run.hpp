@@ -14,6 +14,7 @@ class Run {
         FencePointer fencePointer;
         std::string filePath;
         int level;
+        int size;
         bool isInBloomFilter(int key);
         bool isInFencePointer(int key);
     public:
@@ -21,7 +22,10 @@ class Run {
         Value query(int key);
         std::vector<Value> range_query(int min_key, int max_key);
         std::map<int, Value> readDisk();
-        int size;
+        const string &getFilePath() const;
+        int getLevel() const;
+        int getSize() const;
 };
+
 #endif /* LSM_TREE_SST_H */
 
