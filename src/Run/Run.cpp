@@ -1,3 +1,6 @@
+// TODO: !!!
+// recheck the relative path for all files including /Storage/config.txt, /Storage/Data/..txt, ...
+
 #include "Run.hpp"
 
 bool Run::isInBloomFilter(int key) {
@@ -46,9 +49,49 @@ Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& 
     }
 }
 
-std::map<int, Value> Run::readDisk() {
-    // TODO: copy from db.cpp, use *file to get data
+bool parsebool(std::string str) {
+    if(str == "true") return true;
+    else return false;
+}
 
+std::map<int, Value> Run::readDisk() {
+    // copy from db.cpp, use *file to get data
+    std::string fname = this->filePath;
+    std::ifstream fid(fname);
+    std::string readLine;
+    map<int, Value> ret;
+    int linecount = 0;
+    if(fid.is_open()) {
+        while(std::getline(fid, readLine)) {
+            int key, timestamp;
+            bool visible;
+            vector<int> items = vector<int>();
+            if(linecount == 0 || linecount == 1) {
+                linecount++;
+                continue;  // skip first two rows
+            }
+            std::stringstream valuestream(readLine);
+            std::string str;
+            int itemcount = 0;
+            while(std::getline(valuestream, str, ',')) {
+                if(itemcount == 0) key = stoi(str);
+                else if(itemcount == 1) {
+                    visible = parsebool(str);
+                }
+                else if (itemcount == 2) timestamp = stoi(str);
+                else {
+                    items.push_back(stoi(str));
+                }
+                itemcount++;
+            }
+            linecount++;
+            Value v = Value(visible, timestamp, items);
+            ret[key] = v;
+        }
+    } else {
+        fprintf(stderr, "Unable to read run file %s", fname.c_str());
+    }
+    return ret;
     return {};
 }
 

@@ -28,8 +28,11 @@ std::vector<Value> MemoryTable::range_query(int min_key, int max_key) {
     auto low_position = std::lower_bound(map.begin(), map.end(), min_key);
     auto high_position = std::upper_bound(map.begin(), map.end(), max_key);
     // The range we need is  [low, high)
-    std::vector::vector<Value> nums(low_position, high_position);
-    return nums;
+    vector<Value> ret;
+    for(std::map<int, Value>::iterator iter = low_position; iter != high_position; iter++) {
+        ret.push_back(iter->second);
+    }
+    return ret;
 }
 
 void MemoryTable::pointDelete(int key, Value value) {

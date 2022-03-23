@@ -52,7 +52,7 @@ public:
     void compactTiering(Run run);
     size_t size();
     
-    db_status open(std::string & fname);
+    db_status open(const std::string & fname);
     bool close();
 
     bool load_all_files();  

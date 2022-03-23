@@ -1,7 +1,7 @@
 #include "db.hpp"
 #include "../Run/Run.hpp"
 #include <stdio.h>
-#include <unistd.h>
+#include <string.h>
 
 using namespace templatedb;
 
@@ -25,7 +25,7 @@ void DB::put(int key, Value val) {
     if(memoryTable.getMapSize() > mmtableThreshold) {
         // 2. check if memory-table need to be cleaned
         std::map<int, Value> data = memoryTable.clear();
-        // TODO: create new run and add to first level, create a new file
+        // create new run and add to first level, create a new file
         int size = data.size();
         int level = 1;
 
@@ -66,7 +66,7 @@ void DB::del(int min_key, int max_key) {
 
  std::vector<std::string> DB::get_file_list() {
      std::vector<std::string> res;
-     for (const auto & entry : std::filesystem::directory_iterator("../../Storage/Data"))
+     for (const auto & entry : std::__fs::filesystem::directory_iterator("../../Storage/Data")) 
         res.push_back(entry.path());
      return res;
  }
@@ -323,7 +323,7 @@ bool DB::close()
     //
     if (file.is_open())
     {
-//        this->write_to_file();  // TODO: check here again
+        update_config_file("../../Storage/config.txt");
         file.close();
     }
     this->status = CLOSED;
@@ -353,10 +353,11 @@ void DB::compactLeveling(Run run) {
             }
 
             std::string deleted_path = temp.getFilePath();
-            // TODO: delete sst of temp from disk
+            //  delete sst of temp from disk
+            delete_file(deleted_path);
             int r_level = curr;
             int r_size = res.size();
-            // TODO: path = write_to_file(res);
+            write_to_file(r_level, r_size, res);
             Run newRun = Run(r_size, r_level, "", res);
             curr_level.addARun(newRun);
 
@@ -393,10 +394,14 @@ void DB::compactTiering(Run run) {
 
         // clean all after merge all sst in this level
         std::vector<std::string> deleted_paths = curr_level.cleanAllRuns();
-        // TODO: delete all sst from disk
+        // delete all sst from disk
+        for(const std::string& s: deleted_paths) {
+            delete_file(s);
+        }
         int r_level = curr + 1;
         int r_size = res.size();
-        // TODO: path = write_to_file(res);
+        write_to_file(r_level, r_size, res);
+
         Run newRun = Run(r_size, r_level, "", res);
         levels.getLevelVector(r_level).addARun(newRun);
         curr += 1;
