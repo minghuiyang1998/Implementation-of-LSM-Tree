@@ -1,7 +1,7 @@
+#include <cstdio>
+#include <cstring>
+
 #include "db.hpp"
-#include "../Run/Run.hpp"
-#include <stdio.h>
-#include <string.h>
 
 using namespace templatedb;
 
@@ -15,6 +15,7 @@ Value DB::get(int key) {
     for (int i = 1; i <= totalLevels; ++i) {
         Level level = levels.getLevelVector(i);
         // get all runs in this level
+        // search from new to old
         for (int j = level.size() - 1; j >= 0; j--) {
             Run run = level.getARun(j);
             res = run.query(key);

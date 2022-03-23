@@ -1,3 +1,6 @@
+#ifndef LSM_TREE_MEM_H
+#define LSM_TREE_MEM_H
+
 #include "../utils/Value.hpp"
 #include "../Run/Run.hpp"
 #include <map>
@@ -32,3 +35,5 @@ public:
      */
     void pointDelete(int key, Value value);
 };
+
+#endif /* LSM_TREE_MEM_H */
