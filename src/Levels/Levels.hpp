@@ -6,7 +6,7 @@
 
 class Levels {
 private:
-    vector<Level> levelVector;
+    std::vector<Level> levelVector;
     int totalSize;    // number of plies(levels)
 public:
     Levels();

@@ -49,7 +49,7 @@ Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& 
     }
 }
 
-bool parsebool(std::string str) {
+bool Run::parsebool(std::string str) {
     if(str == "true") return true;
     else return false;
 }

@@ -2,14 +2,13 @@
 #define _LSM_TREE_LEVEL_H_
 
 #include "../Run/Run.hpp"
-#include "../templatedb/db.hpp"
 #include <vector>
 
 class Level {
 private: 
     int levelNum;
     int threshold;
-    vector<Run> runs;
+    std::vector<Run> runs;
 public:
     Level();
     Level(int levelNum, int threshold);

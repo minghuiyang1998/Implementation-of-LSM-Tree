@@ -25,6 +25,7 @@ class Run {
         int size;
         bool isInBloomFilter(int key);
         bool isInFencePointer(int key);
+        bool parsebool(std::string str);
     public:
         Run(int size, int level, std::string filePath, const std::map<int, Value>& map);
         Value query(int key);
