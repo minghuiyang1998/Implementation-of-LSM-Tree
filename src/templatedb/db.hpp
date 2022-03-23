@@ -56,10 +56,12 @@ public:
     bool close();
 
     bool load_all_files();  
-    bool load_data_file(std::string & fname);
+    bool load_data_file(const std::string & fname);
     std::string write_to_file(int level, int size, std::map<int, Value> data);
+    void delete_file(const std::string & fname);
+    void update_config_file(const std::string & fname);
 
-    map<int, Value> load_data(std::string & fname);
+    map<int, Value> load_data(const std::string & fname);
 
     std::vector<Value> execute_op(Operation op);
 

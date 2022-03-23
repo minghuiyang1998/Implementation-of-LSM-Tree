@@ -1,6 +1,7 @@
 #include "db.hpp"
 #include "../Run/Run.hpp"
 #include <stdio.h>
+#include <unistd.h>
 
 using namespace templatedb;
 
@@ -40,45 +41,6 @@ void DB::put(int key, Value val) {
     }
 }
 
-std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
-    std::string filepath;
-    filepath = "../../Storage/Data/";
-    filepath += to_string(generatorCount);
-    filepath += ".txt";
-    generatorCount++;
-    std::ofstream file(filepath);
-
-    std::string writeLine;
-    // write first row, level
-    writeLine = to_string(level);
-    file << writeLine << endl;
-    // write second row, size
-    writeLine = to_string(size);
-    file << writeLine << endl;
-    for(auto iter: data) {
-        writeLine = "";
-        writeLine += to_string(iter.first);  // key
-        Value v = iter.second;
-        bool visible = v.visible;
-        if(visible) writeLine += ",true";
-        else writeLine += ",false";
-
-        int timestamp = v.timestamp;
-        writeLine += ",";
-        writeLine += to_string(timestamp);
-
-        std::vector<int> items = v.items;
-        for(auto i: items) {
-            writeLine += ",";
-            writeLine += to_string(i);
-        }
-
-        file << writeLine << endl; // write a key/value row
-    }
-    return filepath;
-}
-
-
 std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
     // 1. memoryTable search
@@ -102,31 +64,12 @@ void DB::del(int min_key, int max_key) {
     }
 }
 
-// bool DB::buildLevels(std::vector<int> levels) {
-
-//     return false;
-// }
-
-// bool DB::load_all_sst() {
-//     std::vector<std::string> sstList = get_sst_list();
-//     for (auto sst_file : sstList) {
-//     }
-//     return false;
-// }
-
  std::vector<std::string> DB::get_file_list() {
      std::vector<std::string> res;
-     for (const auto & entry : std::filesystem::directory_iterator("../../Storage/Data"));  // TODO: not sure if C++17 could be used here
+     for (const auto & entry : std::filesystem::directory_iterator("../../Storage/Data"))
         res.push_back(entry.path());
+     return res;
  }
-
-//  std::string DB::make_filename(const std::string& name,
-//                           uint64_t number,
-//                           const char* suffix) {
-//      char buf[100];
-//      snprintf(buf, sizeof(buf), "/%06llu.%s",static_cast<unsigned long long>(number),suffix);
-//      return name + buf;
-//  }
 
 size_t DB::size() {
     return table.size();
@@ -169,39 +112,8 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-bool DB::load_data_file(std::string & fname) // load a datafile, one file store one run
+bool DB::load_data_file(const std::string & fname) // load a datafile, one file store one run
 {
-    // std::ifstream fid(fname);
-    // if (fid.is_open())
-    // {
-    //     int key;
-    //     int line_num = 0;
-    //     std::string line;
-    //     std::getline(fid, line); // First line is rows, col
-    //     while (std::getline(fid, line))
-    //     {
-    //         line_num++;
-    //         std::stringstream linestream(line);
-    //         std::string item;
-
-    //         std::getline(linestream, item, ' ');
-    //         std::string op_code = item;
-
-    //         std::getline(linestream, item, ' ');
-    //         key = stoi(item);
-    //         std::vector<int> items;
-    //         while(std::getline(linestream, item, ' '))
-    //         {
-    //             items.push_back(stoi(item));
-    //         }
-    //         this->put(key, Value(items));
-    //     }
-    // }
-    // else
-    // {
-    //     fprintf(stderr, "Unable to read %s\n", fname.c_str());
-    //     return false;
-    // }
     std::ifstream fid(fname);
     if(fid.is_open()) {
         std::string readLine;
@@ -222,12 +134,82 @@ bool DB::load_data_file(std::string & fname) // load a datafile, one file store 
     return true;
 }
 
+
+std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
+    std::string filepath;
+    filepath = "../../Storage/Data/";
+    filepath += to_string(generatorCount);
+    filepath += ".txt";
+    generatorCount++;
+    std::ofstream file(filepath);
+
+    std::string writeLine;
+    // write first row, level
+    writeLine = to_string(level);
+    file << writeLine << endl;
+    // write second row, size
+    writeLine = to_string(size);
+    file << writeLine << endl;
+    for(auto iter: data) {
+        writeLine = "";
+        writeLine += to_string(iter.first);  // key
+        Value v = iter.second;
+        bool visible = v.visible;
+        if(visible) writeLine += ",true";
+        else writeLine += ",false";
+
+        int timestamp = v.timestamp;
+        writeLine += ",";
+        writeLine += to_string(timestamp);
+
+        std::vector<int> items = v.items;
+        for(auto i: items) {
+            writeLine += ",";
+            writeLine += to_string(i);
+        }
+
+        file << writeLine << endl; // write a key/value row
+    }
+    return filepath;
+}
+
+
+void DB::update_config_file(const std::string & fname) {
+    delete_file(fname);
+    std::ofstream file(fname);
+    std::string writeLine;
+    writeLine = to_string(this->totalLevels);
+    file << writeLine << endl;
+
+    writeLine = "";
+    for(auto iter: this->levelsThreshold) {
+        writeLine += to_string(iter);
+        if(iter != this->levelsThreshold[this->levelsThreshold.size()-1]) {
+            writeLine += ",";
+        }
+    }
+    file << writeLine << endl;
+
+    writeLine = to_string(this->mmtableThreshold);
+    file << writeLine << endl;
+
+    if(this->compactionType == Leveling) {
+        writeLine = "Leveling";
+    } else {
+        writeLine = "Tiering";
+    }
+    file << writeLine << endl;
+
+    writeLine = to_string(this->generatorCount);
+    file << writeLine << endl;
+}
+
 bool parsebool(std::string str) {
     if(str == "true") return true;
     else return false;
 }
 
-map<int, Value> DB::load_data(std::string & fname) {
+map<int, Value> DB::load_data(const std::string & fname) {
     std::ifstream fid(fname);
     std::string readLine;
     map<int, Value> ret;
@@ -265,9 +247,7 @@ map<int, Value> DB::load_data(std::string & fname) {
     return ret;
 }
 
-
-
-db_status DB::open(std::string & fname)    // open config.txt, set initial attributes
+db_status DB::open(const std::string & fname)    // open config.txt, set initial attributes
 {
     this->file.open(fname, std::ios::in | std::ios::out);
     if (file.is_open())
@@ -331,6 +311,11 @@ db_status DB::open(std::string & fname)    // open config.txt, set initial attri
     return this->status; 
 }
 
+void DB::delete_file(const std::string &fname) {
+    char filename[fname.size()];
+    strcpy(filename, fname.c_str());
+    remove(filename);
+}
 
 bool DB::close()
 {
