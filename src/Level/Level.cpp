@@ -32,8 +32,13 @@ Run Level::getARun(int index) {
     return runs[index];
 }
 
-void Level::cleanAllRuns() {
+std::vector<std::string> Level::cleanAllRuns() {
+    std::vector<std::string> res;
+    for (auto & run : runs) {
+        res.push_back(run.getFilePath());
+    }
     runs.clear();
+    return res;
 }
 
 int Level::getLevelNum() const {
