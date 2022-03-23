@@ -78,13 +78,6 @@ private:
     int timestamp = 0;
     vector<int> levelsThreshold;
     int mmtableThreshold;
-
-
-    bool buildLevels();
-    
-    // int baseLevelSize;  // size of first leve
-    
-
     std::vector<std::string> get_file_list();
 };
 

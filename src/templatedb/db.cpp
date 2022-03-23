@@ -12,6 +12,17 @@ Value DB::get(int key) {
         return res;
     }
     // 2. search in levels
+    for (int i = 1; i <= totalLevels; ++i) {
+        Level level = levels.getLevelVector(i);
+        // get all runs in this level
+        for (int j = level.size() - 1; j >= 0; j--) {
+            Run run = level.getARun(j);
+            res = run.query(key);
+            if (!res.items.empty()) {
+                return res;
+            }
+        }
+    }
 
     return Value(false);
 }
@@ -40,7 +51,7 @@ void DB::put(int key, Value val) {
         }
     }
 }
-
+// TODO: after midterm
 std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
     // 1. memoryTable search
@@ -54,6 +65,7 @@ void DB::del(int key) {
     put(key, val);
 }
 
+// TODO: after midterm
 void DB::del(int min_key, int max_key) {
     for (auto it = table.begin(); it != table.end(); ) {
         if ((it->first >= min_key) && (it->first <= max_key)){
