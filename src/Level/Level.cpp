@@ -4,7 +4,7 @@ Level::Level() {}
 
 Level::Level(int num, int threshold) {
     levelNum = num;
-    threshold = threshold;
+    this->threshold = threshold;
 
     runs = vector<Run>();
 }
