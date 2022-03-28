@@ -42,10 +42,11 @@ Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& 
     this->size = size;
     this->level = level;
     this->filePath = filePath;
+    bloomFilter = BF::BloomFilter(1024, 64); // numElement: 1024,  bitsPerElement: 64
     for (const auto& element : map) {
         std::string key = to_string(element.first);
-//        bloomFilter.program(key);   // seems to have some bugs here
-//        fencePointer.program(element.first);
+        bloomFilter.program(key);   // seems to have some bugs here
+        fencePointer.program(element.first);
     }
 }
 

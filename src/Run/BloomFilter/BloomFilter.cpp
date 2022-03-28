@@ -14,6 +14,8 @@ BloomFilter::BloomFilter(){
 
 	numIndex = (int)floor(0.693*bitsPerElement+ 0.5); // refer to levelDB
 	size = numElement * bitsPerElement;
+
+    makeBloomFilter();
 }
 
 /**
