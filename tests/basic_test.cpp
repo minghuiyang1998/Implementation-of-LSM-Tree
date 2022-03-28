@@ -20,6 +20,9 @@ protected:
 
     void SetUp() override 
     {
+        db0.open("config0.txt");
+        db0.open("config1.txt");
+        db0.open("config2.txt");
         db1.put(2, v1);
         db1.put(5, v2);
         db2.put(1024, v3);
