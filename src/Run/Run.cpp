@@ -44,8 +44,8 @@ Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& 
     this->filePath = filePath;
     for (const auto& element : map) {
         std::string key = to_string(element.first);
-        bloomFilter.program(key);
-        fencePointer.program(element.first);
+//        bloomFilter.program(key);   // seems to have some bugs here
+//        fencePointer.program(element.first);
     }
 }
 

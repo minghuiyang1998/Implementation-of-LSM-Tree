@@ -137,9 +137,10 @@ bool DB::load_data_file(const std::string & fname) // load a datafile, one file 
         map<int, Value> data = load_data(fname);
 
         Run r = Run(size, l_num, fname, data);
-        
         Level level = this->levels.getLevelVector(l_num);
         level.addARun(r);
+
+        this->levels.setLevelVector(l_num, level);
     } else {
         fprintf(stderr, "Unable to read run file %s", fname.c_str());
         return false;
@@ -215,6 +216,9 @@ void DB::update_config_file(const std::string & fname) {
 
     writeLine = to_string(this->generatorCount);
     file << writeLine << endl;
+
+    writeLine = to_string(this->timestamp);
+    file << writeLine << endl;
 }
 
 bool parsebool(std::string str) {
@@ -260,8 +264,10 @@ map<int, Value> DB::load_data(const std::string & fname) {
     return ret;
 }
 
-db_status DB::open(const std::string & fname)    // open config.txt, set initial attributes
+db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
 {
+
+    std::string fname = this->default_path + filename;
     this->file.open(fname, std::ios::in | std::ios::out);
     if (file.is_open())
     {
@@ -280,7 +286,7 @@ db_status DB::open(const std::string & fname)    // open config.txt, set initial
         std::getline(file, readLine); // Second line is 1,3,5
         std::stringstream levelstream(readLine);
         std::string levelThresholdStr;
-        this->levelsThreshold = vector<int>(this->totalLevels-1);
+        this->levelsThreshold = vector<int>();
         while(std::getline(levelstream, levelThresholdStr, ',')) {
             this->levelsThreshold.push_back(stoi(levelThresholdStr));
         }
@@ -297,6 +303,10 @@ db_status DB::open(const std::string & fname)    // open config.txt, set initial
         // read generator count
         std::getline(file, readLine);
         this->generatorCount = stoi(readLine);
+
+        // read timestamp
+        std::getline(file, readLine);
+        this->timestamp = stoi(readLine);
 
         // construct all levels
         for(int i = 0; i < this->totalLevels; i++) {
@@ -332,8 +342,22 @@ void DB::delete_file(const std::string &fname) {
 
 bool DB::close()
 {
-    // before close the database, clean the memory table, create an Run and store in a file. call clean()
+    // before close the database, clean the memory table, create an Run and store in a file. call clear()
     //
+    map<int, Value> data = this->memoryTable.clear();
+    int size = data.size();
+    int level = 1;
+
+    std::string filepath = write_to_file(level, size, data);
+    Run newRun = Run(size, level, filepath, data);
+
+    // add new run to level
+    if(compactionType == Leveling) {
+        compactLeveling(newRun);
+    } else {
+        compactTiering(newRun);
+    }
+
     if (file.is_open())
     {
         update_config_file("../../Storage/config.txt");
