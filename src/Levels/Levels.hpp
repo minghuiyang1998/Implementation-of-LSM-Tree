@@ -15,6 +15,7 @@ public:
 
     void setLevel(int num, Level l);
     Level getLevelVector(int l);
+    void setLevelVector(int l, const Level& level);
 
     int getTotalSize() const;
 };

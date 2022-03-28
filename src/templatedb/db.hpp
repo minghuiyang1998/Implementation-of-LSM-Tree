@@ -55,7 +55,6 @@ public:
     db_status open(const std::string & fname);
     bool close();
 
-    bool load_all_files();  
     bool load_data_file(const std::string & fname);
     std::string write_to_file(int level, int size, std::map<int, Value> data);
     void delete_file(const std::string & fname);
@@ -71,6 +70,7 @@ private:
     Levels levels;
     MemoryTable memoryTable;
     CompactionType compactionType;
+    std::string default_path = "../../Storage/";
 
     size_t value_dimensions = 0;
     int totalLevels;
