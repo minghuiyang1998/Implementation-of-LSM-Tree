@@ -3,9 +3,11 @@
 //
 #include "MemoryTable.hpp"
 
-map<int, Value> MemoryTable::clear() {
+std::map<int, Value> MemoryTable::clear() {
+    std::map<int, Value> res;
+    res.insert(this->map.begin(), this->map.end());
     this->map.clear();
-    return this->map;
+    return res;
 }
 
 void MemoryTable::put(int key, Value value) {

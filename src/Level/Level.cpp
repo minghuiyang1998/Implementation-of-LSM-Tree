@@ -21,7 +21,9 @@ int Level::size() {
 
 Run Level::removeARun() {
     // always remove the first element(oldest one)
-    return runs.erase(runs.begin())[0];
+    Run del = runs[0];
+    runs.erase(runs.begin());
+    return del;
 }
 
 int Level::getThreshold() const {

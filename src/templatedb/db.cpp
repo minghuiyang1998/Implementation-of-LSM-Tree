@@ -368,14 +368,26 @@ bool DB::close()
     return true;
 }
 
-void DB::compactLeveling(Run run) {
+void DB::compactLeveling(Run r) {
+    Run run = r;
     int curr = 1;
     while (curr <= levels.getTotalSize()) {
         Level curr_level = levels.getLevelVector(curr);
         if (curr_level.size() == 0) {
-            curr_level.addARun(run);
+            // new file always starts in level 1, no more modification
+            if (curr == 1) {
+                curr_level.addARun(run);
+                break;
+            }
+            // the run is derived from upper level, re-create sst with new level number
+            std::map<int, Value> run_data = run.readDisk();
+            delete_file(run.getFilePath());
+            std::string filepath = write_to_file(curr, run.getSize(), run_data);
+            Run newRun = Run(run.getSize(), curr, filepath, run_data);
+            curr_level.addARun(newRun);
             break;
         } else { //number of run == 1
+            // curr level is full, need compaction
             Run temp = curr_level.removeARun();
             std::map<int, Value> res = temp.readDisk(); // previous
             std::map<int, Value> run_data = run.readDisk();
@@ -392,6 +404,8 @@ void DB::compactLeveling(Run run) {
             std::string deleted_path = temp.getFilePath();
             //  delete sst of temp from disk
             delete_file(deleted_path);
+            delete_file(run.getFilePath());
+
             int r_level = curr;
             int r_size = res.size();
             std::string filepath = write_to_file(r_level, r_size, res);
@@ -401,6 +415,9 @@ void DB::compactLeveling(Run run) {
             if (r_size <= curr_level.getThreshold()
             || curr_level.getThreshold() <= -1) {
                 break;
+            } else {
+                // level overflow, ready to write to next level
+                run = curr_level.removeARun();
             }
         }
         curr += 1;

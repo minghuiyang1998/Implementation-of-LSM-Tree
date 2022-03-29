@@ -38,6 +38,10 @@ std::vector<Value> Run::range_query(int min_key, int max_key) {
     return results;
 }
 
+void Run::setFilePath(const string &filePath) {
+    Run::filePath = filePath;
+}
+
 Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& map) {
     this->size = size;
     this->level = level;
@@ -106,6 +110,10 @@ int Run::getLevel() const {
 
 int Run::getSize() const {
     return size;
+}
+
+void Run::setLevel(int level) {
+    Run::level = level;
 }
 
 

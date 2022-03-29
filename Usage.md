@@ -9,3 +9,8 @@
     ctest ?
 
 how to run gtest -> each function work well ?
+______
+after midterm:
+1. range query
+2. range delete
+3. data path

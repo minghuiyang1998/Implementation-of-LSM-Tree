@@ -23,24 +23,26 @@
  */
 
 class Run {
-    private:
-        /* data */
-        BF::BloomFilter bloomFilter;
-        FencePointer fencePointer;
-        std::string filePath;
-        int level;
-        int size;
-        bool isInBloomFilter(int key);
-        bool isInFencePointer(int key);
-        bool parsebool(std::string str);
-    public:
-        Run(int size, int level, std::string filePath, const std::map<int, Value>& map);
-        Value query(int key);
-        std::vector<Value> range_query(int min_key, int max_key);
-        std::map<int, Value> readDisk();
-        const string &getFilePath() const;
-        int getLevel() const;
-        int getSize() const;
+private:
+    /* data */
+    BF::BloomFilter bloomFilter;
+    FencePointer fencePointer;
+    std::string filePath;
+    int level;
+    int size;
+    bool isInBloomFilter(int key);
+    bool isInFencePointer(int key);
+    bool parsebool(std::string str);
+public:
+    Run(int size, int level, std::string filePath, const std::map<int, Value>& map);
+    Value query(int key);
+    std::vector<Value> range_query(int min_key, int max_key);
+    std::map<int, Value> readDisk();
+    const string &getFilePath() const;
+    int getLevel() const;
+    int getSize() const;
+    void setLevel(int level);
+    void setFilePath(const string &filePath);
 };
 
 #endif /* LSM_TREE_SST_H */
