@@ -348,14 +348,16 @@ bool DB::close()
     int size = data.size();
     int level = 1;
 
-    std::string filepath = write_to_file(level, size, data);
-    Run newRun = Run(size, level, filepath, data);
+    if (size > 0) {
+        std::string filepath = write_to_file(level, size, data);
+        Run newRun = Run(size, level, filepath, data);
 
-    // add new run to level
-    if(compactionType == Leveling) {
-        compactLeveling(newRun);
-    } else {
-        compactTiering(newRun);
+        // add new run to level
+        if(compactionType == Leveling) {
+            compactLeveling(newRun);
+        } else {
+            compactTiering(newRun);
+        }
     }
 
     if (file.is_open())
