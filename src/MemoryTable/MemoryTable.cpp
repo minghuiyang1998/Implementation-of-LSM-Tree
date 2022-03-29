@@ -11,17 +11,17 @@ std::map<int, Value> MemoryTable::clear() {
 }
 
 void MemoryTable::put(int key, Value value) {
-    if (!value.visible)
-        this->pointDelete(key, value);
-    this->map.insert(pair<int, Value>(key, value));
+    // insert will not override
+//    this->map.insert(pair<int, Value>(key, value));
+    this->map[key] = value;
 }
 
 Value MemoryTable::query(int key) {
-    auto iter = this->map.find(key);
-    if (iter != map.end()) {
-        return iter->second;
+    bool isKey = this->map.count(key);
+    if (isKey) {
+        return this->map[key];
     } else {
-        return {}; // TODO: right ?
+        return Value(false);
     }
 }
 
@@ -37,8 +37,9 @@ Value MemoryTable::query(int key) {
 //    return ret;
 //}
 
-void MemoryTable::pointDelete(int key, Value value) {
-    this->map.insert(pair<int, Value>(key, value));
-}
+//void MemoryTable::pointDelete(int key, Value value) {
+//    // insert will not override
+//    this->map.insert(pair<int, Value>(key, value));
+//}
 
 

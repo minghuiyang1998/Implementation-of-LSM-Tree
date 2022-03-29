@@ -7,7 +7,7 @@ class Value {
 public:
     std::vector<int> items;
     bool visible = true;
-    long timestamp;
+    long timestamp = -1;
 
     Value() {}
     Value(bool _visible) {visible = _visible;}

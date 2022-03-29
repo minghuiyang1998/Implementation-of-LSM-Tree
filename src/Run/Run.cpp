@@ -14,10 +14,15 @@ bool Run::isInFencePointer(int key) {
 Value Run::query(int key) {
     bool isInBF = isInBloomFilter(key);
     bool isInFP = isInFencePointer(key);
+    if (!isInBF || !isInFP) return Value(false);
 
-    if (!isInBF || !isInFP) return {};
     std::map<int, Value> map = readDisk();
-    return map[key];
+    bool isKey = map.count(key);
+    if (isKey) {
+        return map[key];
+    } else {
+        return Value(false);
+    }
 }
 
 std::vector<Value> Run::range_query(int min_key, int max_key) {

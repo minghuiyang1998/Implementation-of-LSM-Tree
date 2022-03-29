@@ -8,7 +8,10 @@ using namespace templatedb;
 Value DB::get(int key) {
     // 1. memoryTable search
     Value res = memoryTable.query(key);
-    if (!res.items.empty()) {
+    // if the res doesn't have a timestamp => doesn't find the key
+    // if return Value(false) the timestamp will be -1
+    // could use visible false to judge because a valid tombstone's visible is false
+    if (res.timestamp != -1) {
         return res;
     }
     // 2. search in levels
@@ -19,7 +22,7 @@ Value DB::get(int key) {
         for (int j = level.size() - 1; j >= 0; j--) {
             Run run = level.getARun(j);
             res = run.query(key);
-            if (!res.items.empty()) {
+            if (res.timestamp != -1) {
                 return res;
             }
         }
