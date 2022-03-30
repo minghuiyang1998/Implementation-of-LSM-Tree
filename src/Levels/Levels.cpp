@@ -13,7 +13,7 @@ void Levels::setLevel(int num, Level l) {
     levelVector[num] = l;
 }
 
-Level Levels::getLevelVector(int l) {
+Level &Levels::getLevelVector(int l) {
     return levelVector[l - 1];
 }
 

@@ -30,7 +30,8 @@ int Level::getThreshold() const {
     return threshold;
 }
 
-Run Level::getARun(int index) {
+// without & Any changes made to the received object are not reflected in the original vector
+Run &Level::getARun(int index) {
     return runs[index];
 }
 

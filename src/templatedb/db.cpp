@@ -16,11 +16,11 @@ Value DB::get(int key) {
     }
     // 2. search in levels
     for (int i = 1; i <= totalLevels; ++i) {
-        Level level = levels.getLevelVector(i);
+        Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search from new to old
         for (int j = level.size() - 1; j >= 0; j--) {
-            Run run = level.getARun(j);
+            Run &run = level.getARun(j);
             res = run.query(key);
             if (res.timestamp != -1) {
                 return res;
@@ -140,10 +140,10 @@ bool DB::load_data_file(const std::string & fname) // load a datafile, one file 
         map<int, Value> data = load_data(fname);
 
         Run r = Run(size, l_num, fname, data);
-        Level level = this->levels.getLevelVector(l_num);
+        Level &level = this->levels.getLevelVector(l_num);
         level.addARun(r);
 
-        this->levels.setLevelVector(l_num, level);
+//        this->levels.setLevelVector(l_num, level);
     } else {
         fprintf(stderr, "Unable to read run file %s", fname.c_str());
         return false;
@@ -377,7 +377,7 @@ void DB::compactLeveling(Run r) {
     Run run = r;
     int curr = 1;
     while (curr <= levels.getTotalSize()) {
-        Level curr_level = levels.getLevelVector(curr);
+        Level &curr_level = levels.getLevelVector(curr);
         if (curr_level.size() == 0) {
             // new file always starts in level 1, no more modification
             if (curr == 1) {
@@ -432,14 +432,14 @@ void DB::compactLeveling(Run r) {
 
 void DB::compactTiering(Run run) {
     int curr = 1;
-    Level curr_level = levels.getLevelVector(curr);
+    Level &curr_level = levels.getLevelVector(curr);
     curr_level.addARun(run);
     while (curr_level.size() > curr_level.getThreshold()
     || curr_level.getThreshold() <= -1) {
         std::map<int, Value> res;
         // from old to new, new run always inserted to the end of the level
         for (int i = 0; i < curr_level.size(); i++) {
-            Run curr = curr_level.getARun(i); // not delete at this time
+            Run &curr = curr_level.getARun(i); // not delete at this time
             std::map<int, Value> curr_map = curr.readDisk();
             for (const auto& element : curr_map) { // use new_data override prev_data
                 int key = element.first;

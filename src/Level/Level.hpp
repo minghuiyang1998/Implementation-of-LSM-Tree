@@ -16,7 +16,7 @@ public:
 
     void addARun(Run r);
     Run removeARun();
-    Run getARun(int index);
+    Run &getARun(int index);
     std::vector<std::string> cleanAllRuns();
     int getThreshold() const;
     int size();
