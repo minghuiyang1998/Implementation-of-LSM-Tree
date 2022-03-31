@@ -407,6 +407,7 @@ void DB::compactLeveling(Run r) {
         int r_size = res.size();
         std::string filepath = write_to_file(r_level, r_size, res);
         Run newRun = Run(r_size, r_level, filepath, res);
+        // put to current level
         curr_level.addARun(newRun);
 
         if (r_size <= curr_level.getThreshold()
@@ -426,8 +427,7 @@ void DB::compactTiering(Run run) {
     int curr = 1;
     Level &curr_level = levels.getLevelVector(curr);
     curr_level.addARun(run);
-    while (curr_level.size() > curr_level.getThreshold()
-    || curr_level.getThreshold() <= -1) {
+    while (curr_level.getThreshold() != -1 && curr_level.size() > curr_level.getThreshold()) {
         std::map<int, Value> res;
         // from old to new, new run always inserted to the end of the level
         for (int i = 0; i < curr_level.size(); i++) {
@@ -449,12 +449,14 @@ void DB::compactTiering(Run run) {
         for(const std::string& s: deleted_paths) {
             delete_file(s);
         }
+
+        // add to next level
         int r_level = curr + 1;
         int r_size = res.size();
         std::string filepath = write_to_file(r_level, r_size, res);
-
         Run newRun = Run(r_size, r_level, filepath, res);
         levels.getLevelVector(r_level).addARun(newRun);
+        // move to next level
         curr += 1;
         curr_level = levels.getLevelVector(curr);
     }
