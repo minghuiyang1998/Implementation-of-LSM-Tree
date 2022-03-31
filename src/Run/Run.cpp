@@ -12,8 +12,9 @@ bool Run::isInFencePointer(int key) {
 }
 
 Value Run::query(int key) {
-    bool isInBF = isInBloomFilter(key);
+    bool isInBF = isInBloomFilter(key); // false positive
     bool isInFP = isInFencePointer(key);
+    // not in bloom filter or fence pointer, definitely not in this run
     if (!isInBF || !isInFP) return Value(false);
 
     std::map<int, Value> map = readDisk();

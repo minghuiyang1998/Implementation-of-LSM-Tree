@@ -378,26 +378,19 @@ void DB::compactLeveling(Run r) {
     int curr = 1;
     while (curr <= levels.getTotalSize()) {
         Level &curr_level = levels.getLevelVector(curr);
+        std::map<int, Value> res;
+        // no Run in current level
         if (curr_level.size() == 0) {
-            // new file always starts in level 1, no more modification
-            if (curr == 1) {
-                curr_level.addARun(run);
-                break;
-            }
             // the run is derived from upper level, re-create sst with new level number
-            std::map<int, Value> run_data = run.readDisk();
+            res = run.readDisk();
             delete_file(run.getFilePath());
-            std::string filepath = write_to_file(curr, run.getSize(), run_data);
-            Run newRun = Run(run.getSize(), curr, filepath, run_data);
-            curr_level.addARun(newRun);
-            break;
         } else { //number of run == 1
             // curr level is full, need compaction
             Run temp = curr_level.removeARun();
-            std::map<int, Value> res = temp.readDisk(); // previous
+            res = temp.readDisk(); // previous
             std::map<int, Value> run_data = run.readDisk();
-
-            for (const auto& element : run_data) { // use new_data override prev_data
+            std::string deleted_path = temp.getFilePath();
+            for (const auto &element: run_data) { // use new_data override prev_data
                 int key = element.first;
                 Value val = element.second;
                 // exist key, override directly
@@ -405,26 +398,25 @@ void DB::compactLeveling(Run r) {
                 // no exist key, push
                 res[key] = val;
             }
-
-            std::string deleted_path = temp.getFilePath();
             //  delete sst of temp from disk
             delete_file(deleted_path);
             delete_file(run.getFilePath());
-
-            int r_level = curr;
-            int r_size = res.size();
-            std::string filepath = write_to_file(r_level, r_size, res);
-            Run newRun = Run(r_size, r_level, filepath, res);
-            curr_level.addARun(newRun);
-
-            if (r_size <= curr_level.getThreshold()
-            || curr_level.getThreshold() <= -1) {
-                break;
-            } else {
-                // level overflow, ready to write to next level
-                run = curr_level.removeARun();
-            }
         }
+
+        int r_level = curr;
+        int r_size = res.size();
+        std::string filepath = write_to_file(r_level, r_size, res);
+        Run newRun = Run(r_size, r_level, filepath, res);
+        curr_level.addARun(newRun);
+
+        if (r_size <= curr_level.getThreshold()
+        || curr_level.getThreshold() <= -1) {
+            break;
+        } else {
+            // level overflow, ready to write to next level
+            run = curr_level.removeARun();
+        }
+
         curr += 1;
     }
 
