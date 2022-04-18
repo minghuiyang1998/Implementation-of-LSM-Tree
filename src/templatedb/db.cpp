@@ -71,12 +71,58 @@ void DB::del(int key) {
 
 // TODO: after midterm
 void DB::del(int min_key, int max_key) {
-    for (auto it = table.begin(); it != table.end(); ) {
-        if ((it->first >= min_key) && (it->first <= max_key)){
-            table.erase(it++);
-        } else { 
-            ++it;
-        }
+//    for (auto it = table.begin(); it != table.end(); ) {
+//        if ((it->first >= min_key) && (it->first <= max_key)){
+//            table.erase(it++);
+//        } else {
+//            ++it;
+//        }
+//    }
+}
+
+void DB::construct_database(std::fstream & file) {
+    // read total number of levels
+    std::string readLine;
+    std::getline(file, readLine); // First line is 4
+    this->totalLevels = stoi(readLine);
+    this->levels = Levels(this->totalLevels);
+
+    // read threshold for every level
+    std::getline(file, readLine); // Second line is 1,3,5
+    std::stringstream levelstream(readLine);
+    std::string levelThresholdStr;
+    this->levelsThreshold = vector<int>();
+    while(std::getline(levelstream, levelThresholdStr, ',')) {
+        this->levelsThreshold.push_back(stoi(levelThresholdStr));
+    }
+
+    // read mmtablethreshold
+    std::getline(file, readLine); // Third line is 50
+    this->mmtableThreshold = stoi(readLine);
+
+    // read compaction type
+    std::getline(file, readLine);
+    if(readLine == "Leveling") this->compactionType = Leveling;
+    else if(readLine == "Tiering") this->compactionType = Tiering;
+
+    // read generator count
+    std::getline(file, readLine);
+    this->generatorCount = stoi(readLine);
+
+    // read timestamp
+    std::getline(file, readLine);
+    this->timestamp = stoi(readLine);
+
+    // construct all levels
+    for(int i = 0; i < this->totalLevels; i++) {
+        Level newLevel = Level(i, this->levelsThreshold[i]);
+        this->levels.setLevel(i, newLevel);
+    }
+
+    // get all the runs file path and load runs in memory
+    vector<std::string> allFilePath = get_file_list();
+    for(std::string s: allFilePath) {
+        load_data_file(s);
     }
 }
 
@@ -87,14 +133,11 @@ void DB::del(int min_key, int max_key) {
      return res;
  }
 
-size_t DB::size() {
-    return table.size();
-}
 
 // used in basic_test.cpp
 std::vector<Value> DB::scan() {
     std::vector<Value> return_vector;
-    for (auto pair: table) {
+    for (auto pair: memoryTable.getMap()) {
         return_vector.push_back(pair.second);
     }
     return return_vector;
@@ -279,53 +322,58 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
         if (file.peek() == std::ifstream::traits_type::eof())
             return this->status;
 
+        construct_database(file);
         // read total number of levels
-        std::string readLine;
-        std::getline(file, readLine); // First line is 4
-        this->totalLevels = stoi(readLine);
-        this->levels = Levels(this->totalLevels);
-
-        // read threshold for every level
-        std::getline(file, readLine); // Second line is 1,3,5
-        std::stringstream levelstream(readLine);
-        std::string levelThresholdStr;
-        this->levelsThreshold = vector<int>();
-        while(std::getline(levelstream, levelThresholdStr, ',')) {
-            this->levelsThreshold.push_back(stoi(levelThresholdStr));
-        }
-
-        // read mmtablethreshold
-        std::getline(file, readLine); // Third line is 50
-        this->mmtableThreshold = stoi(readLine);
-
-        // read compaction type
-        std::getline(file, readLine);
-        if(readLine == "Leveling") this->compactionType = Leveling;
-        else if(readLine == "Tiering") this->compactionType = Tiering;
-
-        // read generator count
-        std::getline(file, readLine);
-        this->generatorCount = stoi(readLine);
-
-        // read timestamp
-        std::getline(file, readLine);
-        this->timestamp = stoi(readLine);
-
-        // construct all levels
-        for(int i = 0; i < this->totalLevels; i++) {
-            Level newLevel = Level(i, this->levelsThreshold[i]);
-            this->levels.setLevel(i, newLevel);
-        }
-
-        // get all the runs file path and load runs in memory
-        vector<std::string> allFilePath = get_file_list();
-        for(std::string s: allFilePath) {
-            load_data_file(s);
-        }
+//        std::string readLine;
+//        std::getline(file, readLine); // First line is 4
+//        this->totalLevels = stoi(readLine);
+//        this->levels = Levels(this->totalLevels);
+//
+//        // read threshold for every level
+//        std::getline(file, readLine); // Second line is 1,3,5
+//        std::stringstream levelstream(readLine);
+//        std::string levelThresholdStr;
+//        this->levelsThreshold = vector<int>();
+//        while(std::getline(levelstream, levelThresholdStr, ',')) {
+//            this->levelsThreshold.push_back(stoi(levelThresholdStr));
+//        }
+//
+//        // read mmtablethreshold
+//        std::getline(file, readLine); // Third line is 50
+//        this->mmtableThreshold = stoi(readLine);
+//
+//        // read compaction type
+//        std::getline(file, readLine);
+//        if(readLine == "Leveling") this->compactionType = Leveling;
+//        else if(readLine == "Tiering") this->compactionType = Tiering;
+//
+//        // read generator count
+//        std::getline(file, readLine);
+//        this->generatorCount = stoi(readLine);
+//
+//        // read timestamp
+//        std::getline(file, readLine);
+//        this->timestamp = stoi(readLine);
+//
+//        // construct all levels
+//        for(int i = 0; i < this->totalLevels; i++) {
+//            Level newLevel = Level(i, this->levelsThreshold[i]);
+//            this->levels.setLevel(i, newLevel);
+//        }
+//
+//        // get all the runs file path and load runs in memory
+//        vector<std::string> allFilePath = get_file_list();
+//        for(std::string s: allFilePath) {
+//            load_data_file(s);
+//        }
     }
     else if (!file) // File does not exist
     {
-        this->file.open(fname, std::ios::out);
+        create_config_file(fname);
+        // TODO: create a directory to store data files
+        this->file.open(fname, std::ios::in | std::ios::out);
+        construct_database(file);
+
         this->status = OPEN;
     }
     else
@@ -335,6 +383,18 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
     }
 
     return this->status; 
+}
+
+
+
+bool DB::create_config_file(const std::string &fname) {
+    // TODO: create new config file here
+    // levels number initialize as 0
+    // leveling / tiering
+    // initialize a first level threshold
+    // initialize a mmtable threshold
+    // timestamp and file count initialize as 0
+    return true;
 }
 
 void DB::delete_file(const std::string &fname) {

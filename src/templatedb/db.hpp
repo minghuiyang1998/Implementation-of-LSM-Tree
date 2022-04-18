@@ -50,15 +50,16 @@ public:
     void del(int min_key, int max_key);
     void compactLeveling(Run run);
     void compactTiering(Run run);
-    size_t size();
     
     db_status open(const std::string & fname);
     bool close();
 
+    bool create_config_file(const std::string & fname);
     bool load_data_file(const std::string & fname);
     std::string write_to_file(int level, int size, std::map<int, Value> data);
     void delete_file(const std::string & fname);
     void update_config_file(const std::string & fname);
+    void construct_database(std::fstream & file);
 
     map<int, Value> load_data(const std::string & fname);
 
@@ -66,7 +67,6 @@ public:
 
 private:
     std::fstream file;
-    std::unordered_map<int, Value> table;
     Levels levels;
     MemoryTable memoryTable;
     CompactionType compactionType;

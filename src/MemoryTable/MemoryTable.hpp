@@ -20,6 +20,11 @@ public:
     void put(int key, Value val);    // put a key in the map
 
     Value query(int key);
+
+    std::map<int, Value> getMap() {
+        return map;
+    }
+
     std::vector<Value> range_query(int min_key, int max_key);
 
     int getMapSize() {
