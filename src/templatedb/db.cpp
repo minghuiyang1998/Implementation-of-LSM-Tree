@@ -80,7 +80,7 @@ void DB::del(int min_key, int max_key) {
 //    }
 }
 
-void DB::construct_database(std::fstream & file) {
+void DB::construct_database() {
     // read total number of levels
     std::string readLine;
     std::getline(file, readLine); // First line: total no. of levels
@@ -195,9 +195,9 @@ bool DB::load_data_file(const std::string & fname) // load a datafile, one file 
     return true;
 }
 
-void DB::create_config_file(const std::string & fname, const std::string & data_dirname) const {
-    std::string config_filepath = DEFAULT_PATH + fname + ".txt";
-    std::ofstream  file(config_filepath);
+void DB::create_config_file(const std::string & fpath, const std::string & data_dirname) const {
+    std::string config_filepath = fpath;
+    std::ofstream file(config_filepath);
 
     std::string writeLine;
     // write current level number
@@ -216,10 +216,10 @@ void DB::create_config_file(const std::string & fname, const std::string & data_
     writeLine = "0";
     file << writeLine << endl;
     file << writeLine << endl;
-    file.close();
     // write data_dir_name
     writeLine = data_dirname;
     file << writeLine << endl;
+    file.close();
 }
 
 std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
@@ -338,8 +338,8 @@ map<int, Value> DB::load_data(const std::string & fname) {
 db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
 {
 
-    std::string fname = this->DEFAULT_PATH + filename;
-    this->file.open(fname, std::ios::in | std::ios::out);
+    std::string fpath = this->DEFAULT_PATH + filename;
+    this->file.open(fpath, std::ios::in | std::ios::out);
     if (file.is_open())
     {
         this->status = OPEN;
@@ -347,16 +347,15 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
         if (file.peek() == std::ifstream::traits_type::eof())
             return this->status;
 
-        construct_database(file);
+        construct_database();
         // read total number of levels
     }
     else if (!file) // File does not exist
     {
-        std::string data_files_dirname = create_data_dir();
-        create_config_file(fname, data_files_dirname);
-        // TODO: create a directory to store data files
-        this->file.open(fname, std::ios::in | std::ios::out);
-        construct_database(file);
+        std::string dirname = create_data_dir();
+        create_config_file(fpath, dirname);
+        this->file.open(fpath, std::ios::in | std::ios::out);
+        construct_database();
 
         this->status = OPEN;
     }
@@ -369,6 +368,7 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
     return this->status; 
 }
 
+// TODO random generates fake random string, need to debug later
 std::string generate_name() {
     std::string ret;
     for(int i = 0; i < 10; i++) {

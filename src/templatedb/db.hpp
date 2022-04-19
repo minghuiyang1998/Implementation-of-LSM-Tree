@@ -58,7 +58,7 @@ public:
     std::string write_to_file(int level, int size, std::map<int, Value> data);
     void delete_file(const std::string & fname);
     void update_config_file(const std::string & fname);
-    void construct_database(std::fstream & file);
+    void construct_database();
 
     map<int, Value> load_data(const std::string & fname);
 
@@ -83,7 +83,7 @@ private:
     int mmtableThreshold;
 
     std::vector<std::string> get_file_list(const std::string& dirname);
-    void create_config_file(const std::string & fname, const std::string & data_dirname) const;
+    void create_config_file(const std::string & fpath, const std::string & data_dirname) const;
     std::string create_data_dir();
 
 };
