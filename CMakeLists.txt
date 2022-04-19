@@ -10,6 +10,8 @@ set(templatedb_lib
     src/Run/Run.cpp
     src/Level/Level.cpp
     src/Levels/Levels.cpp
+    src/DeleteTable/DeleteTable.cpp
+    src/DeleteTable/Record.hpp
     src/MemoryTable/MemoryTable.cpp
     src/templatedb/db.cpp
     src/templatedb/operation.cpp
