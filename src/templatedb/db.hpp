@@ -17,6 +17,7 @@
 #include "../MemoryTable/MemoryTable.hpp"
 #include "../Run/Run.hpp"
 #include "../utils/Value.hpp"
+#include "../DeleteTable/DeleteTable.hpp"
 
 namespace templatedb
 {
@@ -74,6 +75,8 @@ private:
     std::fstream file;
     Levels levels;
     MemoryTable memoryTable;
+    DeleteTable deleteTable;
+
     CompactionType compactionType;
     size_t value_dimensions = 0;
     int totalLevels;
