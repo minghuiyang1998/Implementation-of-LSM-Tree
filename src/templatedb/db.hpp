@@ -17,6 +17,7 @@
 #include "../MemoryTable/MemoryTable.hpp"
 #include "../Run/Run.hpp"
 #include "../utils/Value.hpp"
+#include "../DeleteTable/DeleteTable.hpp"
 
 namespace templatedb
 {
@@ -69,6 +70,8 @@ private:
     std::unordered_map<int, Value> table;
     Levels levels;
     MemoryTable memoryTable;
+    DeleteTable deleteTable;
+
     CompactionType compactionType;
     std::string default_path = "../../Storage/";
 

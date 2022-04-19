@@ -69,15 +69,10 @@ void DB::del(int key) {
     put(key, val);
 }
 
-// TODO: after midterm
 void DB::del(int min_key, int max_key) {
-    for (auto it = table.begin(); it != table.end(); ) {
-        if ((it->first >= min_key) && (it->first <= max_key)){
-            table.erase(it++);
-        } else { 
-            ++it;
-        }
-    }
+    Record record(min_key, max_key, timestamp);
+    timestamp += 1;
+    deleteTable.put(record);
 }
 
  std::vector<std::string> DB::get_file_list() {
