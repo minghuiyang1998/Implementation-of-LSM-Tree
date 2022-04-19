@@ -83,21 +83,16 @@ void DB::del(int min_key, int max_key) {
 void DB::construct_database(std::fstream & file) {
     // read total number of levels
     std::string readLine;
-    std::getline(file, readLine); // First line is 4
+    std::getline(file, readLine); // First line: total no. of levels
     this->totalLevels = stoi(readLine);
     this->levels = Levels(this->totalLevels);
 
     // read threshold for every level
-    std::getline(file, readLine); // Second line is 1,3,5
-    std::stringstream levelstream(readLine);
-    std::string levelThresholdStr;
-    this->levelsThreshold = vector<int>();
-    while(std::getline(levelstream, levelThresholdStr, ',')) {
-        this->levelsThreshold.push_back(stoi(levelThresholdStr));
-    }
+    std::getline(file, readLine); // Second line: first level threshold
+    this->firstLevelsThreshold = stoi(readLine);
 
     // read mmtablethreshold
-    std::getline(file, readLine); // Third line is 50
+    std::getline(file, readLine); // Third line
     this->mmtableThreshold = stoi(readLine);
 
     // read compaction type
@@ -113,24 +108,29 @@ void DB::construct_database(std::fstream & file) {
     std::getline(file, readLine);
     this->timestamp = stoi(readLine);
 
+    // read data file dir
+    std::getline(file, readLine);
+    this->data_files_dirname = readLine;
+
     // construct all levels
     for(int i = 0; i < this->totalLevels; i++) {
-        Level newLevel = Level(i, this->levelsThreshold[i]);
+        Level newLevel = Level(i, (i+1) * firstLevelsThreshold);
         this->levels.setLevel(i, newLevel);
     }
 
     // get all the runs file path and load runs in memory
-    vector<std::string> allFilePath = get_file_list();
+    vector<std::string> allFilePath = get_file_list(data_files_dirname);
     for(std::string s: allFilePath) {
         load_data_file(s);
     }
 }
 
- std::vector<std::string> DB::get_file_list() {
-     std::vector<std::string> res;
-     for (const auto & entry : std::__fs::filesystem::directory_iterator("../../Storage/Data")) 
+ std::vector<std::string> DB::get_file_list(const std::string& dirname) {
+    std::string dirpath = DEFAULT_PATH + dirname;
+    std::vector<std::string> res;
+    for (const auto & entry : std::__fs::filesystem::directory_iterator(dirpath))
         res.push_back(entry.path());
-     return res;
+    return res;
  }
 
 
@@ -173,6 +173,7 @@ std::vector<Value> DB::execute_op(Operation op)
 
 bool DB::load_data_file(const std::string & fname) // load a datafile, one file store one run
 {
+    // TODO binary file read
     std::ifstream fid(fname);
     if(fid.is_open()) {
         std::string readLine;
@@ -194,12 +195,38 @@ bool DB::load_data_file(const std::string & fname) // load a datafile, one file 
     return true;
 }
 
+void DB::create_config_file(const std::string & fname, const std::string & data_dirname) const {
+    std::string config_filepath = DEFAULT_PATH + fname + ".txt";
+    std::ofstream  file(config_filepath);
+
+    std::string writeLine;
+    // write current level number
+    writeLine = "0";
+    file << writeLine << endl;
+    // write first level threshold
+    writeLine = to_string(DEFAUlT_LEVEL_THRESHOLD);
+    file << writeLine << endl;
+    // write mmtable threshold
+    writeLine = to_string(DEFAULT_MMTABLE_THRESHOLD);
+    file << writeLine << endl;
+    //write type;
+    writeLine = "Leveling";
+    file << writeLine << endl;
+    // write timestamp and count
+    writeLine = "0";
+    file << writeLine << endl;
+    file << writeLine << endl;
+    file.close();
+    // write data_dir_name
+    writeLine = data_dirname;
+    file << writeLine << endl;
+}
 
 std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
+    // TODO: binary file
     std::string filepath;
-    filepath = "../../Storage/Data/";
-    filepath += to_string(generatorCount);
-    filepath += ".txt";
+    filepath = DEFAULT_PATH + "/" + data_files_dirname + "/";
+    filepath = filepath + to_string(generatorCount) + ".txt";
     generatorCount++;
     std::ofstream file(filepath);
 
@@ -238,32 +265,30 @@ void DB::update_config_file(const std::string & fname) {
     delete_file(fname);
     std::ofstream file(fname);
     std::string writeLine;
+    // write total no. levels
     writeLine = to_string(this->totalLevels);
     file << writeLine << endl;
-
-    writeLine = "";
-    for(auto iter: this->levelsThreshold) {
-        writeLine += to_string(iter);
-        if(iter != this->levelsThreshold[this->levelsThreshold.size()-1]) {
-            writeLine += ",";
-        }
-    }
+    // write first level threshold
+    writeLine = to_string(this->DEFAUlT_LEVEL_THRESHOLD);
     file << writeLine << endl;
-
+    // write level threshold
     writeLine = to_string(this->mmtableThreshold);
     file << writeLine << endl;
-
+    // leveling or tiering
     if(this->compactionType == Leveling) {
         writeLine = "Leveling";
     } else {
         writeLine = "Tiering";
     }
     file << writeLine << endl;
-
+    // file count
     writeLine = to_string(this->generatorCount);
     file << writeLine << endl;
-
+    // timestamp
     writeLine = to_string(this->timestamp);
+    file << writeLine << endl;
+    // data dir
+    writeLine = this->data_files_dirname;
     file << writeLine << endl;
 }
 
@@ -313,7 +338,7 @@ map<int, Value> DB::load_data(const std::string & fname) {
 db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
 {
 
-    std::string fname = this->default_path + filename;
+    std::string fname = this->DEFAULT_PATH + filename;
     this->file.open(fname, std::ios::in | std::ios::out);
     if (file.is_open())
     {
@@ -324,52 +349,11 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
 
         construct_database(file);
         // read total number of levels
-//        std::string readLine;
-//        std::getline(file, readLine); // First line is 4
-//        this->totalLevels = stoi(readLine);
-//        this->levels = Levels(this->totalLevels);
-//
-//        // read threshold for every level
-//        std::getline(file, readLine); // Second line is 1,3,5
-//        std::stringstream levelstream(readLine);
-//        std::string levelThresholdStr;
-//        this->levelsThreshold = vector<int>();
-//        while(std::getline(levelstream, levelThresholdStr, ',')) {
-//            this->levelsThreshold.push_back(stoi(levelThresholdStr));
-//        }
-//
-//        // read mmtablethreshold
-//        std::getline(file, readLine); // Third line is 50
-//        this->mmtableThreshold = stoi(readLine);
-//
-//        // read compaction type
-//        std::getline(file, readLine);
-//        if(readLine == "Leveling") this->compactionType = Leveling;
-//        else if(readLine == "Tiering") this->compactionType = Tiering;
-//
-//        // read generator count
-//        std::getline(file, readLine);
-//        this->generatorCount = stoi(readLine);
-//
-//        // read timestamp
-//        std::getline(file, readLine);
-//        this->timestamp = stoi(readLine);
-//
-//        // construct all levels
-//        for(int i = 0; i < this->totalLevels; i++) {
-//            Level newLevel = Level(i, this->levelsThreshold[i]);
-//            this->levels.setLevel(i, newLevel);
-//        }
-//
-//        // get all the runs file path and load runs in memory
-//        vector<std::string> allFilePath = get_file_list();
-//        for(std::string s: allFilePath) {
-//            load_data_file(s);
-//        }
     }
     else if (!file) // File does not exist
     {
-        create_config_file(fname);
+        std::string data_files_dirname = create_data_dir();
+        create_config_file(fname, data_files_dirname);
         // TODO: create a directory to store data files
         this->file.open(fname, std::ios::in | std::ios::out);
         construct_database(file);
@@ -385,16 +369,20 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
     return this->status; 
 }
 
+std::string generate_name() {
+    std::string ret;
+    for(int i = 0; i < 10; i++) {
+        char c = rand() % (90-65) + 65;
+        ret += c;
+    }
+    return ret;
+}
 
-
-bool DB::create_config_file(const std::string &fname) {
-    // TODO: create new config file here
-    // levels number initialize as 0
-    // leveling / tiering
-    // initialize a first level threshold
-    // initialize a mmtable threshold
-    // timestamp and file count initialize as 0
-    return true;
+std::string DB::create_data_dir() {
+    data_files_dirname = generate_name();
+    std::string data_files_path = DEFAULT_PATH + data_files_dirname;
+    std::__fs::filesystem::create_directories(data_files_path);
+    return data_files_dirname;
 }
 
 void DB::delete_file(const std::string &fname) {

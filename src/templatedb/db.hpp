@@ -54,7 +54,6 @@ public:
     db_status open(const std::string & fname);
     bool close();
 
-    bool create_config_file(const std::string & fname);
     bool load_data_file(const std::string & fname);
     std::string write_to_file(int level, int size, std::map<int, Value> data);
     void delete_file(const std::string & fname);
@@ -66,19 +65,27 @@ public:
     std::vector<Value> execute_op(Operation op);
 
 private:
+    const CompactionType DEFAULT_TYPE = Leveling;
+    const int DEFAUlT_LEVEL_THRESHOLD = 3;
+    const int DEFAULT_MMTABLE_THRESHOLD = 30;
+    const std::string DEFAULT_PATH = "../../Storage/";
+
+    std::string data_files_dirname;
     std::fstream file;
     Levels levels;
     MemoryTable memoryTable;
     CompactionType compactionType;
-    std::string default_path = "../../Storage/";
-
     size_t value_dimensions = 0;
     int totalLevels;
     int generatorCount;
     int timestamp = 0;
-    vector<int> levelsThreshold;
+    int firstLevelsThreshold;
     int mmtableThreshold;
-    std::vector<std::string> get_file_list();
+
+    std::vector<std::string> get_file_list(const std::string& dirname);
+    void create_config_file(const std::string & fname, const std::string & data_dirname) const;
+    std::string create_data_dir();
+
 };
 
 }   // namespace templatedb
