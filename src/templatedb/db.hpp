@@ -75,7 +75,7 @@ private:
     int totalLevels;
     int generatorCount;
     int timestamp = 0;
-    int firstLevelsThreshold;
+    int firstLevelThreshold;
     int mmtableThreshold;
 
     std::vector<std::string> get_file_list(const std::string& dirname);
@@ -84,6 +84,7 @@ private:
     bool load_data_file(const std::string & dirpath, const pair<int, int> &pair);
     std::pair<int, int> load_metadata(const std::string & fpath);
     std::string write_files(int level, int size, std::map<int, Value> data);
+    void create_run_dir(int counter);
     void write_metadata(int level, int size);
     void write_data(const std::map<int, Value>& data);
 

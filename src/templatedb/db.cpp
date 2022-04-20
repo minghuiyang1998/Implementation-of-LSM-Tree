@@ -91,7 +91,7 @@ void DB::construct_database() {
 
     // read threshold for every level
     std::getline(file, readLine); // Second line: first level threshold
-    this->firstLevelsThreshold = stoi(readLine);
+    this->firstLevelThreshold = stoi(readLine);
 
     // read mmtablethreshold
     std::getline(file, readLine); // Third line
@@ -116,7 +116,7 @@ void DB::construct_database() {
 
     // construct all levels
     for(int i = 0; i < this->totalLevels; i++) {
-        Level newLevel = Level(i, (i+1) * firstLevelsThreshold);
+        Level newLevel = Level(i, (i+1) * firstLevelThreshold);
         this->levels.setLevel(i, newLevel);
     }
 
@@ -240,16 +240,21 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
 }
 
 std::string DB::write_files(int level, int size, std::map<int, Value> data) {
+    create_run_dir(generatorCount);
     write_metadata(level, size);
     write_data(data);
+    generatorCount++;
     std::string dirpath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
     return dirpath;
 }
 
+void DB::create_run_dir(int counter) {
+    std::string run_files_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+    std::__fs::filesystem::create_directories(run_files_path);
+}
+
 void DB::write_metadata(int level, int size) {
     std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount) + "/metadata";
-    generatorCount++;
-
     std::ofstream fd(filepath);
     std::string writeLine;
     // write first row, level
@@ -318,7 +323,6 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
             return this->status;
 
         construct_database();
-        // read total number of levels
     }
     else if (!file) // File does not exist
     {
