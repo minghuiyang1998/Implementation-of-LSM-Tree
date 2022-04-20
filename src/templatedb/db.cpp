@@ -46,6 +46,8 @@ void DB::put(int key, Value val) {
 
         std::string filepath = write_files(level, size, data);
         Run newRun = Run(size, level, filepath, data);
+        metadata = newRun.getInfo(); // TODO: return Metadata
+        write_files(data, metadata); //
 
         // add new run to level
         if(compactionType == Leveling) {
