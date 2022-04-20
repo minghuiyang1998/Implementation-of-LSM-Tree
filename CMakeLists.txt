@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(templatedb_lib
     src/utils/Value.hpp
+    src/utils/Metadata.hpp
     src/Run/BloomFilter/BloomFilter.cpp
     src/Run/BloomFilter/murmurhash.cpp
     src/Run/FencePointer.hpp

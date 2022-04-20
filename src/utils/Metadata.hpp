@@ -1,19 +1,21 @@
-//
-// Created by Yang Minghui on 2022/4/20.
-//
-
 #ifndef TEMPLATEDB_METADATA_HPP
 #define TEMPLATEDB_METADATA_HPP
 
+#include <vector>
+#include "../Run/Zone.hpp"
+
 class Metadata {
 public:
-    BF::BloomFilter bloomFilter;
-    FencePointer fencePointer;
+    int bf_numElement;
+    int bf_bitsPerElement;
+    std::vector<bool> bf_vec;
+    int fp_min;
+    int fp_max;
     std::string filePath;
     int level;
     int size;
-    int num_zones;             // TODO: config
-    int num_elements_per_zone; // TODO: config
+    int num_zones;
+    int num_elements_per_zone;
     std::vector<Zone> zones;
 };
 
