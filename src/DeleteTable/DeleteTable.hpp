@@ -1,7 +1,7 @@
 #ifndef _DELETE_TABLE_H_
 #define _DELETE_TABLE_H_
 
-#include "stdio.h"
+#include <cstdio>
 #include "utils/Value.hpp"
 #include <vector>
 #include "Record.hpp"
