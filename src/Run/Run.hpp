@@ -12,6 +12,7 @@
 #include "FencePointer.hpp"
 #include "BloomFilter/BloomFilter.hpp"
 #include "../utils/Value.hpp"
+#include "./Zone.hpp"
 
 /**
  * A Run file is like
@@ -30,6 +31,9 @@ private:
     std::string filePath;
     int level;
     int size;
+    int num_zones;             // TODO: config
+    int num_elements_per_zone; // TODO: config
+    std::vector<Zone> zones;
     bool isInBloomFilter(int key);
     bool isInFencePointer(int key);
     bool parsebool(std::string str);
