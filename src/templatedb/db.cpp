@@ -240,7 +240,7 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
 }
 
 std::string DB::write_files(int level, int size, std::map<int, Value> data) {
-    create_run_dir(generatorCount);
+    create_run_dir();
     write_metadata(level, size);
     write_data(data);
     generatorCount++;
@@ -248,7 +248,7 @@ std::string DB::write_files(int level, int size, std::map<int, Value> data) {
     return dirpath;
 }
 
-void DB::create_run_dir(int counter) {
+void DB::create_run_dir() {
     std::string run_files_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
     std::__fs::filesystem::create_directories(run_files_path);
 }

@@ -84,7 +84,7 @@ private:
     bool load_data_file(const std::string & dirpath, const pair<int, int> &pair);
     std::pair<int, int> load_metadata(const std::string & fpath);
     std::string write_files(int level, int size, std::map<int, Value> data);
-    void create_run_dir(int counter);
+    void create_run_dir();
     void write_metadata(int level, int size);
     void write_data(const std::map<int, Value>& data);
 
