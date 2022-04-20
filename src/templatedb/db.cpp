@@ -44,7 +44,7 @@ void DB::put(int key, Value val) {
         int size = data.size();
         int level = 1;
 
-        std::string filepath = write_to_file(level, size, data);
+        std::string filepath = write_files(level, size, data);
         Run newRun = Run(size, level, filepath, data);
 
         // add new run to level
@@ -70,9 +70,9 @@ void DB::del(int key) {
 }
 
 void DB::del(int min_key, int max_key) {
-    Record record(min_key, max_key, timestamp);
-    timestamp += 1;
-    deleteTable.put(record);
+//    Record record(min_key, max_key, timestamp);
+//    timestamp += 1;
+//    deleteTable.put(record);
 //    for (auto it = table.begin(); it != table.end(); ) {
 //        if ((it->first >= min_key) && (it->first <= max_key)){
 //            table.erase(it++);
@@ -121,14 +121,15 @@ void DB::construct_database() {
     }
 
     // get all the runs file path and load runs in memory
-    vector<std::string> allFilePath = get_file_list(data_files_dirname);
-    for(std::string s: allFilePath) {
-        load_data_file(s);
+    vector<std::string> allDirPath = get_file_list(data_files_dirname);
+    for(const std::string& s: allDirPath) {
+        pair<int, int> pair = load_metadata(s + "/metadata");
+        load_data_file(s, pair);
     }
 }
 
  std::vector<std::string> DB::get_file_list(const std::string& dirname) {
-    std::string dirpath = DEFAULT_PATH + dirname;
+    std::string dirpath = DEFAULT_PATH + "/" + dirname;
     std::vector<std::string> res;
     for (const auto & entry : std::__fs::filesystem::directory_iterator(dirpath))
         res.push_back(entry.path());
@@ -139,7 +140,7 @@ void DB::construct_database() {
 // used in basic_test.cpp
 std::vector<Value> DB::scan() {
     std::vector<Value> return_vector;
-    for (auto pair: memoryTable.getMap()) {
+    for (const auto& pair: memoryTable.getMap()) {
         return_vector.push_back(pair.second);
     }
     return return_vector;
@@ -173,93 +174,104 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-bool DB::load_data_file(const std::string & fname) // load a datafile, one file store one run
-{
-    // TODO binary file read
-    std::ifstream fid(fname);
-    if(fid.is_open()) {
+std::pair<int, int> DB::load_metadata(const std::string &fpath) {
+    std::ifstream fid(fpath);
+    if (fid.is_open()) {
         std::string readLine;
         std::getline(fid, readLine);
         int l_num = stoi(readLine);
         std::getline(fid, readLine);
         int size = stoi(readLine);
-        map<int, Value> data = load_data(fname);
+        return pair<int, int> {l_num, size};
+    }
+    return pair<int, int> {-1, -1};
+}
 
-        Run r = Run(size, l_num, fname, data);
-        Level &level = this->levels.getLevelVector(l_num);
-        level.addARun(r);
-
-//        this->levels.setLevelVector(l_num, level);
-    } else {
-        fprintf(stderr, "Unable to read run file %s", fname.c_str());
+bool DB::load_data_file(const std::string & dirpath, const pair<int, int> & pair) // load a datafile, one file store one run
+{
+    std::string fpath = dirpath + "/data";
+    // now using binary file read
+    std::ifstream fid(fpath, ios::out | ios::binary);
+    if(!fid) {
+        fprintf(stderr, "Unable to read run file %s", fpath.c_str());
         return false;
     }
+    // read pair.second number of values
+    map<int, Value> data;
+    for(int i = 0; i < pair.second; i++) {
+        int key;
+        Value value;
+        fid.read((char*)&key, sizeof(int));
+        fid.read((char*)&value, sizeof(Value));
+        data[key] = value;
+    }
+
+    Run r = Run(pair.second, pair.first, dirpath, data);
+    Level &level = this->levels.getLevelVector(pair.first);
+    level.addARun(r);
     return true;
 }
 
 void DB::create_config_file(const std::string & fpath, const std::string & data_dirname) const {
-    std::string config_filepath = fpath;
-    std::ofstream file(config_filepath);
+    const std::string& config_filepath = fpath;
+    std::ofstream fd(config_filepath);
 
     std::string writeLine;
     // write current level number
     writeLine = "0";
-    file << writeLine << endl;
+    fd << writeLine << endl;
     // write first level threshold
     writeLine = to_string(DEFAUlT_LEVEL_THRESHOLD);
-    file << writeLine << endl;
+    fd << writeLine << endl;
     // write mmtable threshold
     writeLine = to_string(DEFAULT_MMTABLE_THRESHOLD);
-    file << writeLine << endl;
+    fd << writeLine << endl;
     //write type;
     writeLine = "Leveling";
-    file << writeLine << endl;
+    fd << writeLine << endl;
     // write timestamp and count
     writeLine = "0";
-    file << writeLine << endl;
-    file << writeLine << endl;
+    fd << writeLine << endl;
+    fd << writeLine << endl;
     // write data_dir_name
     writeLine = data_dirname;
-    file << writeLine << endl;
-    file.close();
+    fd << writeLine << endl;
+    fd.close();
 }
 
-std::string DB::write_to_file(int level, int size, std::map<int, Value> data) {
-    // TODO: binary file
-    std::string filepath;
-    filepath = DEFAULT_PATH + "/" + data_files_dirname + "/";
-    filepath = filepath + to_string(generatorCount) + ".txt";
-    generatorCount++;
-    std::ofstream file(filepath);
+std::string DB::write_files(int level, int size, std::map<int, Value> data) {
+    write_metadata(level, size);
+    write_data(data);
+    std::string dirpath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+    return dirpath;
+}
 
+void DB::write_metadata(int level, int size) {
+    std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount) + "/metadata";
+    generatorCount++;
+
+    std::ofstream fd(filepath);
     std::string writeLine;
     // write first row, level
     writeLine = to_string(level);
-    file << writeLine << endl;
+    fd << writeLine << endl;
     // write second row, size
     writeLine = to_string(size);
-    file << writeLine << endl;
-    for(auto iter: data) {
-        writeLine = "";
-        writeLine += to_string(iter.first);  // key
-        Value v = iter.second;
-        bool visible = v.visible;
-        if(visible) writeLine += ",true";
-        else writeLine += ",false";
+    fd << writeLine << endl;
+    fd.close();
+}
 
-        int timestamp = v.timestamp;
-        writeLine += ",";
-        writeLine += to_string(timestamp);
-
-        std::vector<int> items = v.items;
-        for(auto i: items) {
-            writeLine += ",";
-            writeLine += to_string(i);
-        }
-
-        file << writeLine << endl; // write a key/value row
+void DB::write_data(const std::map<int, Value>& data) {
+    std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount) + "/data";
+    std::ofstream fd(filepath, std::ios::binary);
+    std::string writeLine;
+    for(const auto& iter: data) {
+        int key = iter.first;
+        Value value = iter.second;
+        fd.write((char*)&key, sizeof(int));
+        fd.write((char*)&value, sizeof(Value));
     }
-    return filepath;
+    fd.close();
 }
 
 
@@ -294,53 +306,9 @@ void DB::update_config_file(const std::string & fname) {
     file << writeLine << endl;
 }
 
-bool parsebool(std::string str) {
-    if(str == "true") return true;
-    else return false;
-}
-
-map<int, Value> DB::load_data(const std::string & fname) {
-    std::ifstream fid(fname);
-    std::string readLine;
-    map<int, Value> ret;
-    int linecount = 0;
-    if(fid.is_open()) {
-        while(std::getline(fid, readLine)) {
-            int key, timestamp;
-            bool visible;
-            vector<int> items = vector<int>();
-            if(linecount == 0 || linecount == 1) {
-                linecount++;
-                continue;  // skip first two rows
-            }
-            std::stringstream valuestream(readLine);
-            std::string str;
-            int itemcount = 0;
-            while(std::getline(valuestream, str, ',')) {
-                if(itemcount == 0) key = stoi(str);
-                else if(itemcount == 1) {
-                    visible = parsebool(str);
-                }
-                else if (itemcount == 2) timestamp = stoi(str);
-                else {
-                    items.push_back(stoi(str));
-                }
-                itemcount++;
-            }
-            linecount++;
-            Value v = Value(visible, timestamp, items);
-            ret[key] = v;
-        }
-    } else {
-        fprintf(stderr, "Unable to read run file %s", fname.c_str());
-    }
-    return ret;
-}
-
 db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
 {
-
-    std::string fpath = this->DEFAULT_PATH + filename;
+    std::string fpath = this->DEFAULT_PATH + "/" + filename;
     this->file.open(fpath, std::ios::in | std::ios::out);
     if (file.is_open())
     {
@@ -382,7 +350,7 @@ std::string generate_name() {
 
 std::string DB::create_data_dir() {
     data_files_dirname = generate_name();
-    std::string data_files_path = DEFAULT_PATH + data_files_dirname;
+    std::string data_files_path = DEFAULT_PATH + "/" + data_files_dirname;
     std::__fs::filesystem::create_directories(data_files_path);
     return data_files_dirname;
 }
@@ -402,7 +370,7 @@ bool DB::close()
     int level = 1;
 
     if (size > 0) {
-        std::string filepath = write_to_file(level, size, data);
+        std::string filepath = write_files(level, size, data);
         Run newRun = Run(size, level, filepath, data);
 
         // add new run to level
@@ -455,7 +423,7 @@ void DB::compactLeveling(Run r) {
 
         int r_level = curr;
         int r_size = res.size();
-        std::string filepath = write_to_file(r_level, r_size, res);
+        std::string filepath = write_files(r_level, r_size, res);
         Run newRun = Run(r_size, r_level, filepath, res);
         // put to current level
         curr_level.addARun(newRun);
@@ -503,7 +471,7 @@ void DB::compactTiering(Run run) {
         // add to next level
         int r_level = curr + 1;
         int r_size = res.size();
-        std::string filepath = write_to_file(r_level, r_size, res);
+        std::string filepath = write_files(r_level, r_size, res);
         Run newRun = Run(r_size, r_level, filepath, res);
         levels.getLevelVector(r_level).addARun(newRun);
         // move to next level
