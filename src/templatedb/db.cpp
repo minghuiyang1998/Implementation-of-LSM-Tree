@@ -87,7 +87,7 @@ void DB::construct_database() {
     std::string readLine;
     std::getline(file, readLine); // First line: total no. of levels
     this->totalLevels = stoi(readLine);
-    this->levels = Levels(this->totalLevels);
+    this->levels = Levels(this->firstLevelsThreshold);
 
     // read threshold for every level
     std::getline(file, readLine); // Second line: first level threshold
@@ -393,8 +393,12 @@ bool DB::close()
 
 void DB::compactLeveling(Run r) {
     Run run = r;
+    // always start from level 1
     int curr = 1;
-    while (curr <= levels.getTotalSize()) {
+    // initial
+    if (levels.getTotalSize() == 0) levels.addALevel();
+    while (true) {
+        // get current level
         Level &curr_level = levels.getLevelVector(curr);
         std::map<int, Value> res;
         // no Run in current level
@@ -428,12 +432,12 @@ void DB::compactLeveling(Run r) {
         // put to current level
         curr_level.addARun(newRun);
 
-        if (r_size <= curr_level.getThreshold()
-        || curr_level.getThreshold() <= -1) {
+        if (r_size <= curr_level.getThreshold()) {
             break;
         } else {
             // level overflow, ready to write to next level
             run = curr_level.removeARun();
+            levels.addALevel();
         }
 
         curr += 1;
@@ -443,9 +447,11 @@ void DB::compactLeveling(Run r) {
 
 void DB::compactTiering(Run run) {
     int curr = 1;
+    // initial
+    if (levels.getTotalSize() == 0) levels.addALevel();
     Level &curr_level = levels.getLevelVector(curr);
     curr_level.addARun(run);
-    while (curr_level.getThreshold() != -1 && curr_level.size() > curr_level.getThreshold()) {
+    while (curr_level.size() > curr_level.getThreshold()) {
         std::map<int, Value> res;
         // from old to new, new run always inserted to the end of the level
         for (int i = 0; i < curr_level.size(); i++) {
@@ -469,6 +475,9 @@ void DB::compactTiering(Run run) {
         }
 
         // add to next level
+        // 1. add a new level
+        levels.addALevel();
+        // 2. generate new File
         int r_level = curr + 1;
         int r_size = res.size();
         std::string filepath = write_files(r_level, r_size, res);
