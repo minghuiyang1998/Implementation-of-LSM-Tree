@@ -5,37 +5,37 @@
 
 class Zone {
 private:
-    FencePointer fencePointer;
-    int start_pos;
-    int end_pos;
+    int min;
+    int max;
+    long start_pos;
+    long end_pos;
 
 public:
-    Zone(int min, int max, int start_pos, int end_pos) {
+    Zone(int min, int max, long start_pos, long end_pos) {
+        FencePointer fencePointer_(min, max);
+        this->min = min;
+        this->max = max;
         this->start_pos = start_pos;
         this->end_pos = end_pos;
     }
 
     int getMin() const {
-        return fencePointer.getMin();
+        return this->min;
     }
 
     int getMax() const {
-        return fencePointer.getMax();
+        return this->max;
     };
 
-    void add(int key) {
-        fencePointer.program(key);
-    }
-
     bool query(int key) {
-        return key <= fencePointer.getMax() && key >= fencePointer.getMin();
+        return key <= this->max && key >= this->min;
     }
 
-    int getStartPos() const {
+    long getStartPos() const {
         return start_pos;
     }
 
-    int getEndPos() const {
+    long getEndPos() const {
         return end_pos;
     }
 };

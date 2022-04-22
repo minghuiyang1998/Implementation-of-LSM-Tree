@@ -15,7 +15,7 @@ private:
     int level;
     int size;
     int num_zones;
-    int num_elements_per_zone;
+    const int num_elements_per_zone = 1000;
     std::vector<Zone> zones;
 public:
     int getBfNumElement() const {
@@ -104,6 +104,12 @@ public:
 
     void setZones(const vector<Zone> &zones) {
         Metadata::zones = zones;
+    }
+
+    Metadata(std::string filePath, int level, int size) {
+        this->filePath = filePath;
+        this->level = level;
+        this->size = size;
     }
 };
 
