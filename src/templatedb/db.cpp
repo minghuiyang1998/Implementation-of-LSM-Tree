@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <utility>
 
 #include "db.hpp"
 
@@ -31,6 +32,8 @@ Value DB::get(int key) {
     return Value(false);
 }
 
+
+
 void DB::put(int key, Value val) {
     // fullfill all the attriutes in val
     val.setTimestamp(timestamp + 1);
@@ -43,11 +46,17 @@ void DB::put(int key, Value val) {
         // create new run and add to first level, create a new file
         int size = data.size();
         int level = 1;
+        std::string filepath =  DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+//        std::string filepath = write_files(level, size, data);
 
-        std::string filepath = write_files(level, size, data);
-        Run newRun = Run(size, level, filepath, data);
-        metadata = newRun.getInfo(); // TODO: return Metadata
-        write_files(data, metadata); //
+        // TODO: create zones;
+        Metadata metadata(filepath, level, size);
+        vector<Zone> zones = create_zones(data, metadata);
+
+        Run newRun = Run(size, level, filepath, data, metadata);
+
+//        Metadata metadata = newRun.getInfo(); // TODO: return Metadata
+        write_files(metadata, data);
 
         // add new run to level
         if(compactionType == Leveling) {
@@ -85,13 +94,14 @@ void DB::del(int min_key, int max_key) {
 }
 
 void DB::construct_database() {
+    // first read config.txt
     // read total number of levels
     std::string readLine;
     std::getline(file, readLine); // First line: total no. of levels
     this->totalLevels = stoi(readLine);
-    this->levels = Levels(this->firstLevelsThreshold);
+    this->levels = Levels(this->firstLevelThreshold);
 
-    // read threshold for every level
+    // read threshold for the first level
     std::getline(file, readLine); // Second line: first level threshold
     this->firstLevelThreshold = stoi(readLine);
 
@@ -176,17 +186,92 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-std::pair<int, int> DB::load_metadata(const std::string &fpath) {
+Metadata DB::load_metadata(const std::string &fpath) {
     std::ifstream fid(fpath);
+    Metadata metadata;
     if (fid.is_open()) {
         std::string readLine;
         std::getline(fid, readLine);
-        int l_num = stoi(readLine);
+        int bf_numElement = stoi(readLine);
+        std::getline(fid, readLine);
+        int bf_bitsPerElement = stoi(readLine);
+        std::getline(fid, readLine);
+        std::vector<bool> bf_vec;
+        for(char i : readLine) {
+            if(i == '0') {
+                bf_vec.push_back(false);
+            } else {
+                bf_vec.push_back(true);
+            }
+        }
+        std::getline(fid, readLine);
+        int fp_min = stoi(readLine);
+        std::getline(fid, readLine);
+        int fp_max = stoi(readLine);
+        std::getline(fid, readLine);
+        string filePath = readLine;
+        std::getline(fid, readLine);
+        int level = stoi(readLine);
         std::getline(fid, readLine);
         int size = stoi(readLine);
-        return pair<int, int> {l_num, size};
+        std::getline(fid, readLine);
+        int num_zones = stoi(readLine);
+        std::getline(fid, readLine);
+        int num_elements_per_zone = stoi(readLine);
+        std::vector<Zone> zones;
+        for(int i = 0 ; i < num_zones; i++) {
+            std::getline(fid, readLine);
+            std::stringstream line(readLine);
+            std::string str;
+            std::getline(line, str, ',');
+            int min = stoi(str);
+            std::getline(line, str, ',');
+            int max = stoi(str);
+            std::getline(line, str, ',');
+            int start_pos = stoi(str);
+            std::getline(line, str, ',');
+            int end_pos = stoi(str);
+            Zone zone(min, max, start_pos, end_pos);
+            zones.push_back(zone);
+        }
+        metadata.bf_numElement = bf_numElement;
+        metadata.bf_bitsPerElement = bf_bitsPerElement;
+        metadata.bf_vec = bf_vec;
+        metadata.fp_min = fp_min;
+        metadata.fp_max = fp_max;
+        metadata.filePath = filePath;
+        metadata.level = level;
+        metadata.size = size;
+        metadata.num_zones = num_zones;
+        metadata.num_elements_per_zone = num_elements_per_zone;
+        metadata.zones = zones;
     }
-    return pair<int, int> {-1, -1};
+    return metadata;
+}
+
+std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata & metadata) {
+    std::vector<Zone> zones;
+    int byte_count = 0;
+    int min_key, max_key, min_byte, max_byte;
+    int count = 0;
+    for(const auto& iter: data) {
+        if(count % metadata.num_elements_per_zone == 0) {
+            min_key = iter.first;
+            min_byte = byte_count;
+        }
+        if(count % metadata.num_elements_per_zone == metadata.num_elements_per_zone-1
+        || count == data.size()-1) {
+            max_key = iter.first;
+            max_byte = byte_count;
+            Zone zone(min_key, max_key, min_byte, max_byte);
+            zones.push_back(zone);
+        }
+        count += sizeof(int); // bytes of key
+        for(int i = 0; )
+
+        count++;
+    }
+    return zones;
 }
 
 bool DB::load_data_file(const std::string & dirpath, const pair<int, int> & pair) // load a datafile, one file store one run
@@ -241,39 +326,82 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
     fd.close();
 }
 
-std::string DB::write_files(int level, int size, std::map<int, Value> data) {
-    create_run_dir();
-    write_metadata(level, size);
-    write_data(data);
+void DB::write_files(const Metadata& metadata, const std::map<int, Value>& data, const std::string& run_dir_path) {
+    create_run_dir(run_dir_path);
     generatorCount++;
-    std::string dirpath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
-    return dirpath;
+    write_metadata(metadata, run_dir_path);
+    write_data(data, run_dir_path);
 }
 
-void DB::create_run_dir() {
-    std::string run_files_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
-    std::__fs::filesystem::create_directories(run_files_path);
+void DB::create_run_dir(const std::string& run_dir_path) {
+    std::__fs::filesystem::create_directories(run_dir_path);
 }
 
-void DB::write_metadata(int level, int size) {
-    std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount) + "/metadata";
+void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_path) {
+    std::string filepath = run_dir_path + "/metadata";
     std::ofstream fd(filepath);
     std::string writeLine;
-    // write first row, level
+    // write first row
+    int bf_numElement = metadata.bf_numElement;
+    writeLine = to_string(bf_numElement);
+    fd << writeLine << endl;
+    // write second row
+    int bf_bitsPerElement = metadata.bf_bitsPerElement;
+    writeLine = to_string(bf_bitsPerElement);
+    fd << writeLine << endl;
+
+    writeLine = "";
+    for(bool b: metadata.bf_vec) {
+        if(b) writeLine += "1";
+        else writeLine += "0";
+    }
+    fd << writeLine << endl;
+
+    int fp_min = metadata.fp_min;
+    writeLine = to_string(fp_min);
+    fd << writeLine << endl;
+
+    int fp_max = metadata.fp_max;
+    writeLine = to_string(fp_max);
+    fd << writeLine << endl;
+
+    writeLine = metadata.filePath;
+    fd << writeLine << endl;
+
+    int level = metadata.level;
     writeLine = to_string(level);
     fd << writeLine << endl;
-    // write second row, size
+
+    int size = metadata.size;
     writeLine = to_string(size);
     fd << writeLine << endl;
+
+    int num_zones = metadata.num_zones;
+    writeLine = to_string(num_zones);
+    fd << writeLine << endl;
+
+    int num_elements_per_zone = metadata.num_elements_per_zone;
+    writeLine = to_string(num_elements_per_zone);
+    fd << writeLine << endl;
+
+    for(Zone z: metadata.zones) {
+        writeLine = to_string(z.getMin())
+                + "," + to_string(z.getMax())
+                + "," + to_string(z.getStartPos())
+                + "," + to_string(z.getEndPos());
+        fd << writeLine << endl;
+    }
     fd.close();
 }
 
-void DB::write_data(const std::map<int, Value>& data) {
-    std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount) + "/data";
+void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir_path) {
+    // TODO binary file write need to modified ??? problem exists
+    std::string filepath = run_dir_path + "/data";
     std::ofstream fd(filepath, std::ios::binary);
     std::string writeLine;
     for(const auto& iter: data) {
         int key = iter.first;
+        fd.write((char*)&key, sizeof(int));
         Value value = iter.second;
         fd.write((char*)&key, sizeof(int));
         fd.write((char*)&value, sizeof(Value));
@@ -494,3 +622,5 @@ void DB::compactTiering(Run run) {
         curr_level = levels.getLevelVector(curr);
     }
 }
+
+

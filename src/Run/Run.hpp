@@ -12,16 +12,8 @@
 #include "FencePointer.hpp"
 #include "BloomFilter/BloomFilter.hpp"
 #include "../utils/Value.hpp"
+#include "../utils/Metadata.hpp"
 #include "./Zone.hpp"
-
-/**
- * A Run file is like
- * 1      // level
- * 3      // size
- * 2,true,1,3,5,6,7,8  // key, visible, timestamp, items
- * 4,true,2,2,4
- * 7,true,3,10
- */
 
 class Run {
 private:
@@ -47,6 +39,7 @@ public:
     int getSize() const;
     void setLevel(int level);
     void setFilePath(const string &filePath);
+    Metadata getInfo();
 };
 
 #endif /* LSM_TREE_SST_H */
