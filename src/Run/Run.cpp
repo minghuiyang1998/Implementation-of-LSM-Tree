@@ -122,5 +122,15 @@ void Run::setLevel(int level) {
     Run::level = level;
 }
 
+Run::Run(Metadata metadata, const map<int, Value> &map) {
+    
+}
+
+Metadata Run::getInfo() {
+    Metadata info;
+
+    return info;
+}
+
 
 

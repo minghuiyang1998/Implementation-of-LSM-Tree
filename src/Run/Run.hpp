@@ -13,6 +13,7 @@
 #include "BloomFilter/BloomFilter.hpp"
 #include "../utils/Value.hpp"
 #include "./Zone.hpp"
+#include "../utils/Metadata.hpp"
 
 /**
  * A Run file is like
@@ -39,6 +40,8 @@ private:
     bool parsebool(std::string str);
 public:
     Run(int size, int level, std::string filePath, const std::map<int, Value>& map);
+    Run(Metadata metadata, const std::map<int, Value>& map);
+    Metadata getInfo();
     Value query(int key);
     std::vector<Value> range_query(int min_key, int max_key);
     std::map<int, Value> readDisk();
