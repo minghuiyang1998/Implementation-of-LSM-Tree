@@ -15,7 +15,7 @@ private:
     int level;
     int size;
     int num_zones;
-    const int num_elements_per_zone = 1000;
+    int num_elements_per_zone = 1000;
     std::vector<Zone> zones;
 public:
     int getBfNumElement() const {
@@ -111,6 +111,33 @@ public:
         this->level = level;
         this->size = size;
     }
+
+    Metadata(
+            int bf_numElement,
+            int bf_bitsPerElement,
+            std::vector<bool> bf_vec,
+            int fp_min,
+            int fp_max,
+            std::string filePath,
+            int level,
+            int size,
+            int num_zones,
+            int num_elements_per_zone,
+            std::vector<Zone> zones
+    ) {
+        this->bf_numElement = bf_numElement;
+        this->bf_bitsPerElement = bf_bitsPerElement;
+        this->bf_vec = bf_vec;
+        this->fp_max = fp_max;
+        this->fp_min = fp_min;
+        this->filePath = filePath;
+        this->level = level;
+        this->size = size;
+        this->num_zones = num_zones;
+        this->num_elements_per_zone = num_elements_per_zone;
+        this->zones = zones;
+    }
+
 };
 
 #endif //TEMPLATEDB_METADATA_HPP
