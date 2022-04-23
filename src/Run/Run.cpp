@@ -1,6 +1,3 @@
-// TODO: !!!
-// recheck the relative path for all files including /Storage/config.txt, /Storage/Data/..txt, ...
-
 #include "Run.hpp"
 
 bool Run::isInBloomFilter(int key) {
@@ -21,6 +18,8 @@ Value Run::query(int key) {
     std::map<int, Value> blocks;
     for (const auto& zone : zones) {
         if (zone.getMin() <= key && key <= zone.getMax()) {
+            long start_pos = zone.getStartPos();
+            long end_pos = zone.getEndPos();
             std::map<int, Value> map = readDisk(start_pos, end_pos);;
             blocks.insert(map.begin(), map.end());
         }
@@ -47,6 +46,8 @@ std::map<int, Value> Run::range_query(int min_key, int max_key) {
     for (const auto& zone : zones) {
         // read block, if overlap
         if (max_key < zone.getMin() && zone.getMax() < min_key) continue;
+        long start_pos = zone.getStartPos();
+        long end_pos = zone.getEndPos();
         std::map<int, Value> map = readDisk(start_pos, end_pos);;
         blocks.insert(map.begin(), map.end());
     }
@@ -61,55 +62,44 @@ std::map<int, Value> Run::range_query(int min_key, int max_key) {
     return results;
 }
 
-void Run::setFilePath(const string &filePath) {
-    Run::filePath = filePath;
-}
-
-bool Run::parsebool(std::string str) {
-    if(str == "true") return true;
-    else return false;
-}
-
-// TODO: change to read in block
-std::map<int, Value> Run::readDisk(int start_pos, int end_pos) {
-    // copy from db.cpp, use *file to get data
-    std::string fname = this->filePath;
-    std::ifstream fid(fname);
-    std::string readLine;
+// TODO: change to read in block Done
+std::map<int, Value> Run::readDisk(long start_pos, long end_pos) {
+    std::string run_data_path = this->filePath + "/data";
+    std::ifstream fid(run_data_path, ios::binary);
     map<int, Value> ret;
-    int linecount = 0;
     if(fid.is_open()) {
-        while(std::getline(fid, readLine)) {
-            int key, timestamp;
+        long current_byte = start_pos;
+        fid.seekg(start_pos, ios::beg);
+        while(true) {
+            int key;
+            fid.read((char*)&key, sizeof(int)); // read key
+            current_byte += sizeof(int);
+            Value value;
+            int items_size;
+            fid.read((char*)&items_size, sizeof(int)); // read items size
+            current_byte += sizeof(int);
+            for(int j = 0; j < items_size; j++) {
+                int t;
+                fid.read((char*)&t, sizeof(int)); // read every item
+                current_byte += sizeof(int);
+                value.items.push_back(t);
+            }
+            int timestamp;
+            fid.read((char*)&timestamp, sizeof(timestamp));
+            current_byte += sizeof(timestamp);
+            value.timestamp = timestamp;
             bool visible;
-            vector<int> items = vector<int>();
-            if(linecount == 0 || linecount == 1) {
-                linecount++;
-                continue;  // skip first two rows
-            }
-            std::stringstream valuestream(readLine);
-            std::string str;
-            int itemcount = 0;
-            while(std::getline(valuestream, str, ',')) {
-                if(itemcount == 0) key = stoi(str);
-                else if(itemcount == 1) {
-                    visible = parsebool(str);
-                }
-                else if (itemcount == 2) timestamp = stoi(str);
-                else {
-                    items.push_back(stoi(str));
-                }
-                itemcount++;
-            }
-            linecount++;
-            Value v = Value(visible, timestamp, items);
-            ret[key] = v;
+            fid.read((char*)&visible, sizeof(visible));
+            current_byte += sizeof(visible);
+            value.visible = visible;
+            ret[key] = value;
+
+            if(current_byte >= end_pos) break;
         }
     } else {
-        fprintf(stderr, "Unable to read run file %s", fname.c_str());
+        fprintf(stderr, "Unable to read run file %s", run_data_path.c_str());
     }
     return ret;
-    return {};
 }
 
 const string &Run::getFilePath() const {
@@ -183,6 +173,36 @@ Metadata Run::getInfo() {
             );
 
     return info;
+}
+
+std::map<int, Value> Run::readRun() {
+    std::string run_data_path = this->filePath + "/data";
+    std::ifstream fid(run_data_path, ios::binary);
+    map<int, Value> ret;
+    if(fid.is_open()) {
+        for(int i = 0; i < this->size; i++) {
+            int key;
+            fid.read((char*)&key, sizeof(int)); // read key
+            Value value;
+            int items_size;
+            fid.read((char*)&items_size, sizeof(int)); // read items size
+            for(int j = 0; j < items_size; j++) {
+                int t;
+                fid.read((char*)&t, sizeof(int));  //read every item
+                value.items.push_back(t);
+            }
+            int timestamp;
+            fid.read((char*)&timestamp, sizeof(timestamp));
+            value.timestamp = timestamp;
+            bool visible;
+            fid.read((char*)&visible, sizeof(bool));
+            value.visible = visible;
+            ret[key] = value;
+        }
+    } else {
+        fprintf(stderr, "Unable to read run file %s", run_data_path.c_str());
+    }
+    return ret;
 }
 
 

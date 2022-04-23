@@ -13,11 +13,11 @@ void Levels::setLevel(int num, Level l) {
 }
 
 Level &Levels::getLevelVector(int l) {
-    return levelVector[l - 1];
+    return levelVector[l];
 }
 
 void Levels::setLevelVector(int l, const Level& level) {
-    levelVector[l - 1] = level;
+    levelVector[l] = level;
 }
 
 int Levels::getTotalSize() const {

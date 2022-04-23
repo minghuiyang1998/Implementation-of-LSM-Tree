@@ -70,6 +70,7 @@ private:
     const std::string DEFAULT_PATH = "../../Storage";
 
     std::string data_files_dirname;
+    std::string config_file_path;
     std::fstream file;
     Levels levels;
     MemoryTable memoryTable;
@@ -84,18 +85,23 @@ private:
     int mmtableThreshold;
 
     std::vector<std::string> get_run_dir_list(const std::string& dirname);
+
+    Metadata load_metadata(const std::string & fpath);
+    void load_delete_table();
+
     void create_config_file(const std::string & fpath, const std::string & data_dirname) const;
     std::string create_data_dir();
-//    bool load_data_file(const std::string & dirpath, const Metadata & metadata);
-    Metadata load_metadata(const std::string & fpath);
-    void write_files(const Metadata& metadata, const std::map<int, Value>& data, const std::string& run_dir_path);
     void create_run_dir(const std::string& run_dir_path);
     std::vector<Zone> create_zones(const std::map<int, Value> & data, Metadata & metadata);
+
+    void write_files(const Metadata& metadata, const std::map<int, Value>& data, const std::string& run_dir_path);
     void write_metadata(const Metadata& metadata, const std::string& run_dir_path);
     void write_data(const std::map<int, Value>& data, const std::string& run_dir_path);
+    void write_delete_table();
 
-    void delete_file(const std::string & fname);
-    void update_config_file(const std::string & fname);
+    void delete_dir(const std::string & dir_path);
+    void delete_file(const std::string & file_path);
+    void update_config_file();
 
     void construct_database();
 

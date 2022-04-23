@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <utility>
+#include <random>
 
 #include "db.hpp"
 
@@ -25,7 +26,7 @@ Value DB::get(int key) {
         }
     }
     // 2. search in levels
-    for (int i = 1; i <= totalLevels; ++i) {
+    for (int i = 0; i < totalLevels; ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search table in level from new to old
@@ -46,10 +47,8 @@ Value DB::get(int key) {
     return Value(false);
 }
 
-
-
 void DB::put(int key, Value val) {
-    // fullfill all the attriutes in val
+    // fulfill all the attributes in val
     val.setTimestamp(timestamp + 1);
     timestamp += 1;
     // 1. put in memory table
@@ -175,12 +174,15 @@ void DB::construct_database() {
         this->levels.setLevel(i, newLevel);
     }
 
+    // read delete table
+    load_delete_table();
+
     // get all the runs file path and load runs in memory
     vector<std::string> allRunDirPath = get_run_dir_list(data_files_dirname);
     for(const std::string& runPath: allRunDirPath) {
         Metadata metadata = load_metadata(runPath + "/metadata");
         Run newRun = Run(metadata);
-        Level &level = this->levels.getLevelVector(metadata.getLevel());  // TODO: check if need -1
+        Level &level = this->levels.getLevelVector(metadata.getLevel());  //TODO -1？
         level.addARun(newRun);
     }
 }
@@ -284,6 +286,25 @@ Metadata DB::load_metadata(const std::string &fpath) {
     Metadata metadata;
     return metadata;
 }
+void DB::load_delete_table() {
+    std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/delete_table";
+    std::ifstream fid(filepath);
+    if(fid.is_open()) {
+        std::string readLine;
+        while (std::getline(fid, readLine)) {
+            std::stringstream line(readLine);
+            std::string str;
+            std::getline(line, str, ',');
+            int minKey = stoi(str);
+            std::getline(line, str, ',');
+            int maxKey = stoi(str);
+            std::getline(line, str, ',');
+            int delete_timestamp = stoi(str);
+            Record record(minKey, maxKey, delete_timestamp);
+            deleteTable.put(record);
+        }
+    }
+}
 
 std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata & metadata) {
     std::vector<Zone> zones;
@@ -314,34 +335,6 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
     }
     return zones;
 }
-
-//bool DB::load_data_file(const std::string & dirpath, const Metadata & metadata) // load a datafile, one file store one run
-//{
-//    // TODO binary file read, need to read all the file to construct the runs in database
-//    std::string fpath = dirpath + "/data";
-//    int size = metadata.getSize();
-//    // now using binary file read
-//    std::ifstream fid(fpath, ios::out | ios::binary);
-//    if(!fid) {
-//        fprintf(stderr, "Unable to read run file %s", fpath.c_str());
-//        return false;
-//    }
-//
-//    // read pair.second number of values
-//    map<int, Value> data;
-//    for(int i = 0; i < pair.second; i++) {
-//        int key;
-//        Value value;
-//        fid.read((char*)&key, sizeof(int));
-//        fid.read((char*)&value, sizeof(Value));
-//        data[key] = value;
-//    }
-//
-//    Run r = Run(pair.second, pair.first, dirpath, data);
-//    Level &level = this->levels.getLevelVector(pair.first);
-//    level.addARun(r);
-//    return true;
-//}
 
 void DB::create_config_file(const std::string & fpath, const std::string & data_dirname) const {
     const std::string& config_filepath = fpath;
@@ -439,15 +432,14 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
 }
 
 void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir_path) {
-    // TODO binary file write need to modified ??? problem exists
     std::string filepath = run_dir_path + "/data";
     std::ofstream fd(filepath, std::ios::binary);
     for(const auto& iter: data) {
         int key = iter.first;
         fd.write((char*)&key, sizeof(int));   // write key
         Value value = iter.second;
-        long size = iter.second.items.size();
-        fd.write((char*)&size, sizeof(long));   // write size of items
+        int size = iter.second.items.size();
+        fd.write((char*)&size, sizeof(int));   // write size of items
         for(int i = 0; i < size; i++) {
             fd.write((char*)&value.items[i], sizeof(int));  // write every value in items
         }
@@ -457,10 +449,26 @@ void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir
     fd.close();
 }
 
+void DB::write_delete_table() {
+    std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/delete_table";
+    std::ofstream fd(filepath);
+    std::string writeLine;
 
-void DB::update_config_file(const std::string & fname) {
-    delete_file(fname);
-    std::ofstream file(fname);
+    for(Record r: deleteTable.getRecords()) {
+        int minKey = r.minKey;
+        int maxKey = r.maxKey;
+        int delete_timestamp = r.timestamp;
+
+        writeLine = to_string(minKey) + "," + to_string(maxKey) + "," + to_string(delete_timestamp);
+        fd << writeLine << endl;
+    }
+}
+
+
+void DB::update_config_file() {
+    std::string fpath = this->config_file_path;
+    delete_file(fpath);
+    std::ofstream file(fpath);
     std::string writeLine;
     // write total no. levels
     writeLine = to_string(this->totalLevels);
@@ -492,6 +500,7 @@ void DB::update_config_file(const std::string & fname) {
 db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
 {
     std::string fpath = this->DEFAULT_PATH + "/" + filename;
+    this->config_file_path = fpath;
     this->file.open(fpath, std::ios::in | std::ios::out);
     if (file.is_open())
     {
@@ -520,12 +529,17 @@ db_status DB::open(const std::string & filename)    // open config.txt, set init
     return this->status; 
 }
 
-// TODO random generates fake random string, need to debug later
+// TODO random generates fake random string, need to debug later Done
+char random_generator() {
+    static std::mt19937 generator(std::random_device{}());
+    static std::uniform_int_distribution<std::size_t> distribution('A', 'Z');
+    return static_cast<char>(distribution(generator));
+}
+
 std::string generate_name() {
     std::string ret;
     for(int i = 0; i < 10; i++) {
-        char c = rand() % (90-65) + 65;
-        ret += c;
+        ret += random_generator();
     }
     return ret;
 }
@@ -537,23 +551,29 @@ std::string DB::create_data_dir() {
     return data_files_dirname;
 }
 
-void DB::delete_file(const std::string &fname) {
-    char filename[fname.size()];
-    strcpy(filename, fname.c_str());
-    remove(filename);
+void DB::delete_dir(const std::string & dir_path) {
+    std::__fs::filesystem::remove_all(dir_path);
+}
+
+void DB::delete_file(const std::string & file_path) {
+    std::__fs::filesystem::remove(file_path);
 }
 
 bool DB::close()
 {
-    // before close the database, clean the memory table, create an Run and store in a file. call clear()
-    //
+    // before close the database, clean the memory table, create a Run and store in a file. call clear()
     map<int, Value> data = this->memoryTable.clear();
     int size = data.size();
-    int level = 1;
+    int level = 0;
+    std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
 
     if (size > 0) {
-        std::string filepath = write_files(level, size, data);
-        Run newRun = Run(size, level, filepath, data);
+        Metadata metadata(run_dir_path, level, size);
+        vector<Zone> zones = create_zones(data, metadata);
+        metadata.setZones(zones);
+        Run newRun = Run(metadata, data);
+        metadata = newRun.getInfo();
+        write_files(metadata, data, run_dir_path);
 
         // add new run to level
         if(compactionType == Leveling) {
@@ -565,9 +585,10 @@ bool DB::close()
 
     if (file.is_open())
     {
-        update_config_file("../../Storage/config.txt");
+        update_config_file();
         file.close();
     }
+    write_delete_table();
     this->status = CLOSED;
 
     return true;
@@ -589,13 +610,13 @@ void DB::compactLeveling(Run r) {
         // no Run in current level
         if (curr_level.size() == 0) {
             // the run is derived from upper level, re-create sst with new level number
-            res = run.readDisk();
-            delete_file(run.getFilePath());
+            res = run.readRun();
+            delete_dir(run.getFilePath());
         } else { //number of run == 1
             // curr level is full, need compaction
             Run temp = curr_level.removeARun();
-            res = temp.readDisk(); // previous
-            std::map<int, Value> run_data = run.readDisk();
+            res = temp.readRun(); // previous
+            std::map<int, Value> run_data = run.readRun();
             std::string deleted_path = temp.getFilePath();
             for (const auto &element: run_data) { // use new_data override prev_data
                 int key = element.first;
@@ -606,16 +627,20 @@ void DB::compactLeveling(Run r) {
                 res[key] = val;
             }
             //  delete sst of temp from disk
-            delete_file(deleted_path);
-            delete_file(run.getFilePath());
+            delete_dir(deleted_path);
+            delete_dir(run.getFilePath());
         }
 
         int r_level = curr;
         int r_size = res.size();
 
-
-        std::string filepath = write_files(r_level, r_size, res);
-        Run newRun = Run(r_size, r_level, filepath, res);
+        std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+        Metadata metadata(run_dir_path, r_level, r_size);
+        vector<Zone> zones = create_zones(res, metadata);
+        metadata.setZones(zones);
+        Run newRun = Run(metadata, res);
+        metadata = newRun.getInfo();
+        write_files(metadata, res, run_dir_path);
         // put to current level
         curr_level.addARun(newRun);
 
@@ -626,10 +651,8 @@ void DB::compactLeveling(Run r) {
             run = curr_level.removeARun();
             levels.addALevel();
         }
-
         curr += 1;
     }
-
 }
 
 void DB::compactTiering(Run run) {
@@ -643,7 +666,7 @@ void DB::compactTiering(Run run) {
         // from old to new, new run always inserted to the end of the level
         for (int i = 0; i < curr_level.size(); i++) {
             Run &curr = curr_level.getARun(i); // not delete at this time
-            std::map<int, Value> curr_map = curr.readDisk();
+            std::map<int, Value> curr_map = curr.readRun();
             for (const auto& element : curr_map) { // use new_data override prev_data
                 int key = element.first;
                 Value val = element.second;
@@ -658,7 +681,7 @@ void DB::compactTiering(Run run) {
         std::vector<std::string> deleted_paths = curr_level.cleanAllRuns();
         // delete all sst from disk
         for(const std::string& s: deleted_paths) {
-            delete_file(s);
+            delete_dir(s);
         }
 
         // add to next level
@@ -667,8 +690,16 @@ void DB::compactTiering(Run run) {
         // 2. generate new File
         int r_level = curr + 1;
         int r_size = res.size();
-        std::string filepath = write_files(r_level, r_size, res);
-        Run newRun = Run(r_size, r_level, filepath, res);
+        std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+
+        Metadata metadata(run_dir_path, r_level, r_size);
+        vector<Zone> zones = create_zones(res, metadata);
+        metadata.setZones(zones);
+        Run newRun = Run(metadata, res);
+
+        metadata = newRun.getInfo();
+        write_files(metadata, res, run_dir_path);
+
         levels.getLevelVector(r_level).addARun(newRun);
         // move to next level
         curr += 1;

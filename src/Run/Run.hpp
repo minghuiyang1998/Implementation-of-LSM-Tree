@@ -29,18 +29,18 @@ private:
 
     bool isInBloomFilter(int key);
     bool isInFencePointer(int key);
-    bool parsebool(std::string str);
 public:
     Run(Metadata metadata, const std::map<int, Value>& map);
     Run(Metadata metadata);
     Value query(int key);
     std::map<int, Value> range_query(int min_key, int max_key);
-    std::map<int, Value> readDisk(int start_pos, int end_pos);
+    std::map<int, Value> readDisk(long start_pos, long end_pos); // read in block
+    std::map<int, Value> readRun();
     const string &getFilePath() const;
     int getLevel() const;
     int getSize() const;
     void setLevel(int level);
-    void setFilePath(const string &filePath);
+    Metadata getInfo();
 };
 
 #endif /* LSM_TREE_SST_H */
