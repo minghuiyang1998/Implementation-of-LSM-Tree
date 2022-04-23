@@ -16,10 +16,9 @@ def get_op(dims, key_max):
         args += [random.choice(range(key_max))]
         args.sort()
     elif (op_code == 'D'):
-	if ( random.choice(range(key_max))%2 == 0 ):
-	        args += [random.choice(range(key_max))]
-	        args.sort()
-
+        if (random.choice(range(key_max)) % 2 == 0):
+            args += [random.choice(range(key_max))]
+            args.sort()
     return [op_code] + args
 
 
