@@ -329,7 +329,7 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
             byte_count += sizeof(int);  // bytes of items
         }
         byte_count += sizeof(bool);  // bytes of visible
-        byte_count += sizeof(timestamp);  // bytes of timestamp
+        byte_count += sizeof(int);  // bytes of timestamp
 
         count++;
     }
@@ -443,7 +443,7 @@ void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir
         for(int i = 0; i < size; i++) {
             fd.write((char*)&value.items[i], sizeof(int));  // write every value in items
         }
-        fd.write((char*)&value.timestamp, sizeof(long));   // write timestamp
+        fd.write((char*)&value.timestamp, sizeof(int));   // write timestamp
         fd.write((char*)&value.visible, sizeof(bool));     // write visible
     }
     fd.close();
