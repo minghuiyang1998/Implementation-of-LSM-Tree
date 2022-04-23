@@ -25,30 +25,15 @@ Value MemoryTable::query(int key) {
     }
 }
 
-// TODO: lower_bound error with cmake
-std::vector<Value> MemoryTable::range_query(int min_key, int max_key) {
-    vector<Value> ret;
-    // if map can't find that key, ret will contain a Value(false)
-    for(int i  = min_key, i <= max_key; ++i){
-        ret.emplace_back(query(i));
+std::map<int, Value> MemoryTable::range_query(int min_key, int max_key) {
+    auto low_position = map.lower_bound(min_key);
+    auto high_position = map.upper_bound(max_key);
+    // The range we need is  [low, high]
+    std::map<int, Value> ret;
+    for(auto iter = low_position; iter != high_position; iter++) {
+        ret[iter->first] = iter->second;
     }
-    return  ret;
-
+    return ret;
 }
-//std::vector<Value> MemoryTable::range_query(int min_key, int max_key) {
-//    auto low_position = std::lower_bound(map.begin(), map.end(), min_key);
-//    auto high_position = std::upper_bound(map.begin(), map.end(), max_key);
-//    // The range we need is  [low, high)
-//    vector<Value> ret;
-//    for(std::map<int, Value>::iterator iter = low_position; iter != high_position; iter++) {
-//        ret.push_back(iter->second);
-//    }
-//    return ret;
-//}
-
-//void MemoryTable::pointDelete(int key, Value value) {
-//    // insert will not override
-//    this->map.insert(pair<int, Value>(key, value));
-//}
 
 

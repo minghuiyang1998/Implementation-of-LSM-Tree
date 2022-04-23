@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "utils/Value.hpp"
 #include <vector>
+#include <map>
 #include "Record.hpp"
 
 class DeleteTable {
@@ -16,19 +17,17 @@ public:
     /**
      * if true, key is legal
      * if false, key is illegal
-     * @param key
-     * @return
      */
-    bool filterSingleQuery(int key);
+    bool filterSingleQuery(int key, Value val);
 
     /**
      * return a same size vector of keys
      * if true, key is legal
      * if false, key is illegal
-     * @param keys
-     * @return
      */
-    std::vector<bool> filterRangeQuery(std::vector<int> keys);
+    std::map<int, bool> filterRangeQuery(std::map<int, Value> keyValues);
+
+    const std::vector<Record> &getRecords() const;
 };
 
 #endif /* _DELETE_TABLE_H_ */
