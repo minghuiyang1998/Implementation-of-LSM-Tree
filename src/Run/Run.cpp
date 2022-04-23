@@ -17,10 +17,19 @@ Value Run::query(int key) {
     // not in bloom filter or fence pointer, definitely not in this run
     if (!isInBF || !isInFP) return Value(false);
 
-    std::map<int, Value> map = readDisk();
-    bool isKey = map.count(key);
+    // Identify the parts that might contain data
+    std::map<int, Value> blocks;
+    for (const auto& zone : zones) {
+        if (zone.getMin() <= key && key <= zone.getMax()) {
+            std::map<int, Value> map = readDisk(start_pos, end_pos);;
+            blocks.insert(map.begin(), map.end());
+        }
+    }
+
+    // return value
+    bool isKey = blocks.count(key);
     if (isKey) {
-        return map[key];
+        return blocks[key];
     } else {
         return Value(false);
     }
@@ -33,8 +42,16 @@ std::vector<Value> Run::range_query(int min_key, int max_key) {
     if (min_key > fp_max || max_key < fp_min) return {};
 
     std::vector<Value> results;
-    std::map<int, Value> map = readDisk();
-    for (const auto& element : map) {
+    // Identify the parts that might contain data
+    std::map<int, Value> blocks;
+    for (const auto& zone : zones) {
+        // read block, if overlap
+        if (max_key < zone.getMin() && zone.getMax() < min_key) continue;
+        std::map<int, Value> map = readDisk(start_pos, end_pos);;
+        blocks.insert(map.begin(), map.end());
+    }
+
+    for (const auto& element : blocks) {
         int key = element.first;
         if (key <= fp_max && key >= min_key) {
             Value val = element.second;
@@ -53,7 +70,8 @@ bool Run::parsebool(std::string str) {
     else return false;
 }
 
-std::map<int, Value> Run::readDisk() {
+// TODO: change to read in block
+std::map<int, Value> Run::readDisk(int start_pos, int end_pos) {
     // copy from db.cpp, use *file to get data
     std::string fname = this->filePath;
     std::ifstream fid(fname);

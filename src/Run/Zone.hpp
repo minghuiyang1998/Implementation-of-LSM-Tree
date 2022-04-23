@@ -5,12 +5,14 @@
 
 class Zone {
 private:
-    int min;
-    int max;
-    long start_pos;
-    long end_pos;
+    int min = INT32_MAX;
+    int max = INT32_MAX;
+    long start_pos = -1;
+    long end_pos = -1;
 
 public:
+    Zone() {}
+
     Zone(int min, int max, long start_pos, long end_pos) {
         FencePointer fencePointer_(min, max);
         this->min = min;

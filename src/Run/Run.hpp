@@ -36,7 +36,7 @@ public:
     Metadata getInfo();
     Value query(int key);
     std::vector<Value> range_query(int min_key, int max_key);
-    std::map<int, Value> readDisk();
+    std::map<int, Value> readDisk(int start_pos, int end_pos);
     const string &getFilePath() const;
     int getLevel() const;
     int getSize() const;
