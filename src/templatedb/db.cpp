@@ -13,18 +13,32 @@ Value DB::get(int key) {
     // if return Value(false) the timestamp will be -1
     // could use visible false to judge because a valid tombstone's visible is false
     if (res.timestamp != -1) {
-        return res;
+        // include this key
+        // did not deleted by single delete or range delete
+        bool isEligible = deleteTable.filterSingleQuery(key, res) && res.visible;
+        if (isEligible) {
+            return res;
+        } else {
+            // not eligible, There is no need to look in files,
+            // because the latest key here has been deleted
+            return Value(false);
+        }
     }
     // 2. search in levels
     for (int i = 1; i <= totalLevels; ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
-        // search from new to old
+        // search table in level from new to old
         for (int j = level.size() - 1; j >= 0; j--) {
             Run &run = level.getARun(j);
             res = run.query(key);
+            // include this key
             if (res.timestamp != -1) {
-                return res;
+                // did not deleted by single delete or range delete
+                bool isEligible = deleteTable.filterSingleQuery(key, res) && res.visible;
+                if (isEligible) {
+                    return res;
+                }
             }
         }
     }
@@ -66,11 +80,48 @@ void DB::put(int key, Value val) {
         }
     }
 }
-// TODO: after midterm
+
 std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
-    // 1. memoryTable search
-    // 2. search in levels
+    std::map<int, Value> return_map;
+
+    // 1. search in levels
+    for (int i = 1; i <= totalLevels; ++i) {
+        Level &level = levels.getLevelVector(i);
+        // get all runs in this level
+        // search table in this level from new to old,
+        for (int j = level.size() - 1; j >= 0; j--) {
+            Run &run = level.getARun(j);
+            std::map<int, Value> result = run.range_query(min_key, max_key);
+            for (const auto& r : result) {
+                int key = r.first;
+                Value val = r.second;
+                // make sure the new one will not be overridden by old one
+                if (return_map.count(key) == 0) {
+                    return_map[key] = val;
+                }
+            }
+        }
+    }
+
+    // 2. memoryTable search (override duplicate keys with the newest value in memoryTable)
+    std::map<int, Value> memResult = memoryTable.range_query(min_key, max_key);
+    for (const auto& r : memResult) {
+        int key = r.first;
+        Value val = r.second;
+        return_map[key] = val;
+    }
+
+    // 3. filter all rangeDeleted and not visible
+    for (const auto& item : return_map) {
+        int key = item.first;
+        Value val = item.second;
+        bool isEligible = deleteTable.filterSingleQuery(key, val) && val.visible;
+        if (isEligible) {
+            return_vector.push_back(val);
+        }
+    }
+
     return return_vector;
 }
 
@@ -81,16 +132,9 @@ void DB::del(int key) {
 }
 
 void DB::del(int min_key, int max_key) {
-//    Record record(min_key, max_key, timestamp);
-//    timestamp += 1;
-//    deleteTable.put(record);
-//    for (auto it = table.begin(); it != table.end(); ) {
-//        if ((it->first >= min_key) && (it->first <= max_key)){
-//            table.erase(it++);
-//        } else {
-//            ++it;
-//        }
-//    }
+    Record record(min_key, max_key, timestamp);
+    timestamp += 1;
+    deleteTable.put(record);
 }
 
 void DB::construct_database() {

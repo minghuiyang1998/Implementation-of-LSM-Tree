@@ -10,14 +10,19 @@ std::map<int, Value> MemoryTable::clear() {
     return res;
 }
 
+std::map<int, Value> & MemoryTable::getMap() {
+    return map;
+}
+
 void MemoryTable::put(int key, Value value) {
     // insert will not override
+    // old value will be override by new value in map
 //    this->map.insert(pair<int, Value>(key, value));
     this->map[key] = value;
 }
 
 Value MemoryTable::query(int key) {
-    bool isKey = this->map.count(key);
+    bool isKey = this->map.count(key) == 1;
     if (isKey) {
         return this->map[key];
     } else {
@@ -31,7 +36,9 @@ std::map<int, Value> MemoryTable::range_query(int min_key, int max_key) {
     // The range we need is  [low, high]
     std::map<int, Value> ret;
     for(auto iter = low_position; iter != high_position; iter++) {
-        ret[iter->first] = iter->second;
+        int key = iter->first;
+        Value val = iter->second;
+        ret[key] = val;
     }
     return ret;
 }

@@ -7,6 +7,7 @@
    measures the time it takes to execute the workload over the dataset
 6. how to use tests/
     ctest ?
+7. Memorytable and Disk searches only for the presence or absence of the key and do not test for visible
 
 how to run gtest -> each function work well ?
 ______

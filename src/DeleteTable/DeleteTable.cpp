@@ -4,6 +4,10 @@ void DeleteTable::put(Record record) {
     records.push_back(record);
 }
 
+/**
+ * if deleted in range delete, return false.
+ * if not found, return true.
+ * */
 bool DeleteTable::filterSingleQuery(int key, Value val) {
     // iterate records backwards to only compare with newer Records
     for (int i = records.size() - 1; i >= 0; i--) {

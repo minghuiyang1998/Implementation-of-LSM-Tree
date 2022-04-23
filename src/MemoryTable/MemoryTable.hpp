@@ -25,6 +25,8 @@ public:
     int getMapSize() {
         return map.size();
     }
+
+    std::map<int, Value> &getMap();
 };
 
 #endif /* LSM_TREE_MEM_H */
