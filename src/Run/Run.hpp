@@ -27,6 +27,7 @@ private:
     int num_zones;             // TODO: config
     int num_elements_per_zone; // TODO: config
     std::vector<Zone> zones;
+
     bool isInBloomFilter(int key);
     bool isInFencePointer(int key);
     bool parsebool(std::string str);

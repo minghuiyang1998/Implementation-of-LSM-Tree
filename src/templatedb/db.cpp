@@ -45,19 +45,17 @@ void DB::put(int key, Value val) {
         std::map<int, Value> data = memoryTable.clear();
         // create new run and add to first level, create a new file
         int size = data.size();
-        int level = 1;
-        std::string filepath =  DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
-//        std::string filepath = write_files(level, size, data);
+        int level = 0;
+        std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
 
-        // TODO: create zones;
-        Metadata metadata(filepath, level, size);
+        // TODO: create zones Done
+        Metadata metadata(run_dir_path, level, size);
         vector<Zone> zones = create_zones(data, metadata);
         metadata.setZones(zones);
         Run newRun = Run(metadata, data);
 
-
-        metadata = newRun.getInfo(); // TODO: return Metadata
-        write_files(metadata, data);
+        metadata = newRun.getInfo(); // TODO: return Metadata Done
+        write_files(metadata, data, run_dir_path);
 
         // add new run to level
         if(compactionType == Leveling) {
@@ -134,21 +132,22 @@ void DB::construct_database() {
     }
 
     // get all the runs file path and load runs in memory
-    vector<std::string> allDirPath = get_file_list(data_files_dirname);
-    for(const std::string& s: allDirPath) {
-        Metadata matadata = load_metadata(s + "/metadata");
-        load_data_file(s, matadata);
+    vector<std::string> allRunDirPath = get_run_dir_list(data_files_dirname);
+    for(const std::string& runPath: allRunDirPath) {
+        Metadata metadata = load_metadata(runPath + "/metadata");
+        Run newRun = Run(metadata);
+        Level &level = this->levels.getLevelVector(metadata.getLevel());  // TODO: check if need -1
+        level.addARun(newRun);
     }
 }
 
- std::vector<std::string> DB::get_file_list(const std::string& dirname) {
+ std::vector<std::string> DB::get_run_dir_list(const std::string& dirname) {
     std::string dirpath = DEFAULT_PATH + "/" + dirname;
     std::vector<std::string> res;
     for (const auto & entry : std::__fs::filesystem::directory_iterator(dirpath))
         res.push_back(entry.path());
     return res;
  }
-
 
 // used in basic_test.cpp
 std::vector<Value> DB::scan() {
@@ -260,45 +259,45 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
             zones.push_back(zone);
         }
         byte_count += sizeof(int); // bytes of key
-        byte_count += sizeof(long); // bytes of size of items
+        byte_count += sizeof(int); // bytes of size of items
         for(int i = 0; i < iter.second.items.size(); i++) {
             byte_count += sizeof(int);  // bytes of items
         }
         byte_count += sizeof(bool);  // bytes of visible
-        byte_count += sizeof(timestamp);
+        byte_count += sizeof(timestamp);  // bytes of timestamp
 
         count++;
     }
     return zones;
 }
 
-bool DB::load_data_file(const std::string & dirpath, const Metadata & metadata) // load a datafile, one file store one run
-{
-    // TODO binary file read, need to read all the file to construct the runs in database
-    std::string fpath = dirpath + "/data";
-    int size = metadata.getSize();
-    // now using binary file read
-    std::ifstream fid(fpath, ios::out | ios::binary);
-    if(!fid) {
-        fprintf(stderr, "Unable to read run file %s", fpath.c_str());
-        return false;
-    }
-
-    // read pair.second number of values
-    map<int, Value> data;
-    for(int i = 0; i < pair.second; i++) {
-        int key;
-        Value value;
-        fid.read((char*)&key, sizeof(int));
-        fid.read((char*)&value, sizeof(Value));
-        data[key] = value;
-    }
-
-    Run r = Run(pair.second, pair.first, dirpath, data);
-    Level &level = this->levels.getLevelVector(pair.first);
-    level.addARun(r);
-    return true;
-}
+//bool DB::load_data_file(const std::string & dirpath, const Metadata & metadata) // load a datafile, one file store one run
+//{
+//    // TODO binary file read, need to read all the file to construct the runs in database
+//    std::string fpath = dirpath + "/data";
+//    int size = metadata.getSize();
+//    // now using binary file read
+//    std::ifstream fid(fpath, ios::out | ios::binary);
+//    if(!fid) {
+//        fprintf(stderr, "Unable to read run file %s", fpath.c_str());
+//        return false;
+//    }
+//
+//    // read pair.second number of values
+//    map<int, Value> data;
+//    for(int i = 0; i < pair.second; i++) {
+//        int key;
+//        Value value;
+//        fid.read((char*)&key, sizeof(int));
+//        fid.read((char*)&value, sizeof(Value));
+//        data[key] = value;
+//    }
+//
+//    Run r = Run(pair.second, pair.first, dirpath, data);
+//    Level &level = this->levels.getLevelVector(pair.first);
+//    level.addARun(r);
+//    return true;
+//}
 
 void DB::create_config_file(const std::string & fpath, const std::string & data_dirname) const {
     const std::string& config_filepath = fpath;
@@ -535,7 +534,10 @@ void DB::compactLeveling(Run r) {
     // always start from level 1
     int curr = 1;
     // initial
-    if (levels.getTotalSize() == 0) levels.addALevel();
+    if (levels.getTotalSize() == 0) {
+        levels.addALevel();
+        this->totalLevels++;
+    }
     while (true) {
         // get current level
         Level &curr_level = levels.getLevelVector(curr);
