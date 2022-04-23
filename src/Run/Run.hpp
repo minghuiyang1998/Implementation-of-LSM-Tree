@@ -42,7 +42,6 @@ public:
     int getSize() const;
     void setLevel(int level);
     void setFilePath(const string &filePath);
-    Metadata getInfo();
 };
 
 #endif /* LSM_TREE_SST_H */

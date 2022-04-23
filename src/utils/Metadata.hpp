@@ -13,7 +13,7 @@ private:
     int fp_max = INT32_MIN;
     std::string filePath;
     int level;
-    int size;
+    int size;   // the size of the run
     int num_zones;
     int num_elements_per_zone = 1000;
     std::vector<Zone> zones;
@@ -105,6 +105,8 @@ public:
     void setZones(const vector<Zone> &zones) {
         Metadata::zones = zones;
     }
+
+    Metadata() {}
 
     Metadata(std::string filePath, int level, int size) {
         this->filePath = filePath;

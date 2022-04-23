@@ -52,10 +52,11 @@ void DB::put(int key, Value val) {
         // TODO: create zones;
         Metadata metadata(filepath, level, size);
         vector<Zone> zones = create_zones(data, metadata);
+        metadata.setZones(zones);
+        Run newRun = Run(metadata, data);
 
-        Run newRun = Run(size, level, filepath, data, metadata);
 
-//        Metadata metadata = newRun.getInfo(); // TODO: return Metadata
+        metadata = newRun.getInfo(); // TODO: return Metadata
         write_files(metadata, data);
 
         // add new run to level
@@ -135,8 +136,8 @@ void DB::construct_database() {
     // get all the runs file path and load runs in memory
     vector<std::string> allDirPath = get_file_list(data_files_dirname);
     for(const std::string& s: allDirPath) {
-        pair<int, int> pair = load_metadata(s + "/metadata");
-        load_data_file(s, pair);
+        Metadata matadata = load_metadata(s + "/metadata");
+        load_data_file(s, matadata);
     }
 }
 
@@ -188,7 +189,6 @@ std::vector<Value> DB::execute_op(Operation op)
 
 Metadata DB::load_metadata(const std::string &fpath) {
     std::ifstream fid(fpath);
-    Metadata metadata;
     if (fid.is_open()) {
         std::string readLine;
         std::getline(fid, readLine);
@@ -234,18 +234,11 @@ Metadata DB::load_metadata(const std::string &fpath) {
             Zone zone(min, max, start_pos, end_pos);
             zones.push_back(zone);
         }
-        metadata.bf_numElement = bf_numElement;
-        metadata.bf_bitsPerElement = bf_bitsPerElement;
-        metadata.bf_vec = bf_vec;
-        metadata.fp_min = fp_min;
-        metadata.fp_max = fp_max;
-        metadata.filePath = filePath;
-        metadata.level = level;
-        metadata.size = size;
-        metadata.num_zones = num_zones;
-        metadata.num_elements_per_zone = num_elements_per_zone;
-        metadata.zones = zones;
+        Metadata metadata(bf_numElement, bf_bitsPerElement, bf_vec, fp_min, fp_max,
+                          filePath, level, size, num_zones, num_elements_per_zone, zones);
+        return metadata;
     }
+    Metadata metadata;
     return metadata;
 }
 
@@ -255,34 +248,42 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
     int min_key, max_key, min_byte, max_byte;
     int count = 0;
     for(const auto& iter: data) {
-        if(count % metadata.num_elements_per_zone == 0) {
+        if(count % metadata.getNumElementsPerZone() == 0) {
             min_key = iter.first;
             min_byte = byte_count;
         }
-        if(count % metadata.num_elements_per_zone == metadata.num_elements_per_zone-1
+        if(count % metadata.getNumElementsPerZone() == metadata.getNumElementsPerZone()-1
         || count == data.size()-1) {
             max_key = iter.first;
             max_byte = byte_count;
             Zone zone(min_key, max_key, min_byte, max_byte);
             zones.push_back(zone);
         }
-        count += sizeof(int); // bytes of key
-        for(int i = 0; )
+        byte_count += sizeof(int); // bytes of key
+        byte_count += sizeof(long); // bytes of size of items
+        for(int i = 0; i < iter.second.items.size(); i++) {
+            byte_count += sizeof(int);  // bytes of items
+        }
+        byte_count += sizeof(bool);  // bytes of visible
+        byte_count += sizeof(timestamp);
 
         count++;
     }
     return zones;
 }
 
-bool DB::load_data_file(const std::string & dirpath, const pair<int, int> & pair) // load a datafile, one file store one run
+bool DB::load_data_file(const std::string & dirpath, const Metadata & metadata) // load a datafile, one file store one run
 {
+    // TODO binary file read, need to read all the file to construct the runs in database
     std::string fpath = dirpath + "/data";
+    int size = metadata.getSize();
     // now using binary file read
     std::ifstream fid(fpath, ios::out | ios::binary);
     if(!fid) {
         fprintf(stderr, "Unable to read run file %s", fpath.c_str());
         return false;
     }
+
     // read pair.second number of values
     map<int, Value> data;
     for(int i = 0; i < pair.second; i++) {
@@ -342,49 +343,49 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     std::ofstream fd(filepath);
     std::string writeLine;
     // write first row
-    int bf_numElement = metadata.bf_numElement;
+    int bf_numElement = metadata.getBfNumElement();
     writeLine = to_string(bf_numElement);
     fd << writeLine << endl;
     // write second row
-    int bf_bitsPerElement = metadata.bf_bitsPerElement;
+    int bf_bitsPerElement = metadata.getBfBitsPerElement();
     writeLine = to_string(bf_bitsPerElement);
     fd << writeLine << endl;
 
     writeLine = "";
-    for(bool b: metadata.bf_vec) {
+    for(bool b: metadata.getBfVec()) {
         if(b) writeLine += "1";
         else writeLine += "0";
     }
     fd << writeLine << endl;
 
-    int fp_min = metadata.fp_min;
+    int fp_min = metadata.getFpMin();
     writeLine = to_string(fp_min);
     fd << writeLine << endl;
 
-    int fp_max = metadata.fp_max;
+    int fp_max = metadata.getFpMax();
     writeLine = to_string(fp_max);
     fd << writeLine << endl;
 
-    writeLine = metadata.filePath;
+    writeLine = metadata.getFilePath();
     fd << writeLine << endl;
 
-    int level = metadata.level;
+    int level = metadata.getLevel();
     writeLine = to_string(level);
     fd << writeLine << endl;
 
-    int size = metadata.size;
+    int size = metadata.getSize();
     writeLine = to_string(size);
     fd << writeLine << endl;
 
-    int num_zones = metadata.num_zones;
+    int num_zones = metadata.getNumZones();
     writeLine = to_string(num_zones);
     fd << writeLine << endl;
 
-    int num_elements_per_zone = metadata.num_elements_per_zone;
+    int num_elements_per_zone = metadata.getNumElementsPerZone();
     writeLine = to_string(num_elements_per_zone);
     fd << writeLine << endl;
 
-    for(Zone z: metadata.zones) {
+    for(Zone z: metadata.getZones()) {
         writeLine = to_string(z.getMin())
                 + "," + to_string(z.getMax())
                 + "," + to_string(z.getStartPos())
@@ -398,13 +399,17 @@ void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir
     // TODO binary file write need to modified ??? problem exists
     std::string filepath = run_dir_path + "/data";
     std::ofstream fd(filepath, std::ios::binary);
-    std::string writeLine;
     for(const auto& iter: data) {
         int key = iter.first;
-        fd.write((char*)&key, sizeof(int));
+        fd.write((char*)&key, sizeof(int));   // write key
         Value value = iter.second;
-        fd.write((char*)&key, sizeof(int));
-        fd.write((char*)&value, sizeof(Value));
+        long size = iter.second.items.size();
+        fd.write((char*)&size, sizeof(long));   // write size of items
+        for(int i = 0; i < size; i++) {
+            fd.write((char*)&value.items[i], sizeof(int));  // write every value in items
+        }
+        fd.write((char*)&value.timestamp, sizeof(long));   // write timestamp
+        fd.write((char*)&value.visible, sizeof(bool));     // write visible
     }
     fd.close();
 }
@@ -561,6 +566,8 @@ void DB::compactLeveling(Run r) {
 
         int r_level = curr;
         int r_size = res.size();
+
+
         std::string filepath = write_files(r_level, r_size, res);
         Run newRun = Run(r_size, r_level, filepath, res);
         // put to current level
