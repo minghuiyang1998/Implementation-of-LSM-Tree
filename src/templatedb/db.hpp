@@ -59,6 +59,7 @@ public:
     
     db_status open(const std::string & fname);
     bool close();
+    bool load_benchmark_test_data_file(std::string & fname);
 
     std::vector<Value> execute_op(Operation op);
 

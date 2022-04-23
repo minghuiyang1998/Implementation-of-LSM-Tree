@@ -681,3 +681,40 @@ int DB::size() {
 }
 
 
+bool DB::load_benchmark_test_data_file(std::string & fname) {
+    std::ifstream fid(fname);
+    if (fid.is_open())
+    {
+        int key;
+        int line_num = 0;
+        std::string line;
+        std::getline(fid, line); // First line is rows, col
+        while (std::getline(fid, line))
+        {
+            line_num++;
+            std::stringstream linestream(line);
+            std::string item;
+
+            std::getline(linestream, item, ' ');
+            std::string op_code = item;
+
+            std::getline(linestream, item, ' ');
+            key = stoi(item);
+            std::vector<int> items;
+            while(std::getline(linestream, item, ' '))
+            {
+                items.push_back(stoi(item));
+            }
+            this->put(key, Value(items));
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Unable to read %s\n", fname.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+

@@ -49,7 +49,7 @@ int main(int argc, char * argv[])
     
     if (!cfg.fname.empty())
     {
-        if (!db.load_data_file(cfg.fname))
+        if (!db.load_benchmark_test_data_file(cfg.fname))
         {
             fprintf(stderr, "Unable to load data file %s into DB\n", cfg.fname.c_str());
             if (db.status == templatedb::OPEN)
