@@ -13,10 +13,22 @@ private:
 public:
     void put(Record record);
 
-    Value filterSingleQuery(Value result);
+    /**
+     * if true, key is legal
+     * if false, key is illegal
+     * @param key
+     * @return
+     */
+    bool filterSingleQuery(int key);
 
-    // 返回合法的结果
-    std::vector<Value> filterRangeQuery(std::vector<Value> results);
+    /**
+     * return a same size vector of keys
+     * if true, key is legal
+     * if false, key is illegal
+     * @param keys
+     * @return
+     */
+    std::vector<bool> filterRangeQuery(std::vector<int> keys);
 };
 
 #endif /* _DELETE_TABLE_H_ */
