@@ -4,6 +4,7 @@
 #include <cstdio>
 #include "utils/Value.hpp"
 #include <vector>
+#include <map>
 #include "Record.hpp"
 
 class DeleteTable {
@@ -13,10 +14,20 @@ private:
 public:
     void put(Record record);
 
-    Value filterSingleQuery(Value result);
+    /**
+     * if true, key is legal
+     * if false, key is illegal
+     */
+    bool filterSingleQuery(int key, Value val);
 
-    // 返回合法的结果
-    std::vector<Value> filterRangeQuery(std::vector<Value> results);
+    /**
+     * return a same size vector of keys
+     * if true, key is legal
+     * if false, key is illegal
+     */
+    std::map<int, bool> filterRangeQuery(std::map<int, Value> keyValues);
+
+    const std::vector<Record> &getRecords() const;
 };
 
 #endif /* _DELETE_TABLE_H_ */

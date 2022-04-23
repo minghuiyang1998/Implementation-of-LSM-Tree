@@ -20,22 +20,11 @@ public:
     void put(int key, Value val);    // put a key in the map
 
     Value query(int key);
-
-    std::map<int, Value> getMap() {
-        return map;
-    }
-
-    std::vector<Value> range_query(int min_key, int max_key);
+    std::map<int, Value> range_query(int min_key, int max_key);
 
     int getMapSize() {
         return map.size();
     }
-    /**
-     * check the visible varaible in Value and
-     * then determine it it a delete operation
-     * @param Key
-     */
-    void pointDelete(int key, Value value);
 };
 
 #endif /* LSM_TREE_MEM_H */
