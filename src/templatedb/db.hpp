@@ -18,6 +18,7 @@
 #include "../Run/Run.hpp"
 #include "../utils/Value.hpp"
 #include "../DeleteTable/DeleteTable.hpp"
+#include "../DeleteTable/Record.hpp"
 
 namespace templatedb
 {
