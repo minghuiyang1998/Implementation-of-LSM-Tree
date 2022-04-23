@@ -14,7 +14,6 @@
 #include "../utils/Value.hpp"
 #include "../utils/Metadata.hpp"
 #include "./Zone.hpp"
-#include "../utils/Metadata.hpp"
 
 class Run {
 private:
@@ -33,9 +32,8 @@ private:
 public:
     Run(Metadata metadata, const std::map<int, Value>& map);
     Run(Metadata metadata);
-    Metadata getInfo();
     Value query(int key);
-    std::vector<Value> range_query(int min_key, int max_key);
+    std::map<int, Value> range_query(int min_key, int max_key);
     std::map<int, Value> readDisk(int start_pos, int end_pos);
     const string &getFilePath() const;
     int getLevel() const;

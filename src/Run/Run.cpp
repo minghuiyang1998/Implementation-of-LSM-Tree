@@ -35,13 +35,13 @@ Value Run::query(int key) {
     }
 }
 
-std::vector<Value> Run::range_query(int min_key, int max_key) {
+std::map<int, Value> Run::range_query(int min_key, int max_key) {
     int fp_min = fencePointer.getMin();
     int fp_max = fencePointer.getMax();
     // not available element in this sst
     if (min_key > fp_max || max_key < fp_min) return {};
 
-    std::vector<Value> results;
+    std::map<int, Value> results;
     // Identify the parts that might contain data
     std::map<int, Value> blocks;
     for (const auto& zone : zones) {
@@ -55,7 +55,7 @@ std::vector<Value> Run::range_query(int min_key, int max_key) {
         int key = element.first;
         if (key <= fp_max && key >= min_key) {
             Value val = element.second;
-            results.push_back(val);
+            results[key] = val;
         }
     }
     return results;
