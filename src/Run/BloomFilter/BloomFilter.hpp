@@ -11,6 +11,8 @@ namespace BF {
 
         BloomFilter(int numElement_, int bitsPerElement_);
 
+        BloomFilter( int numElement_, int bitsPerElement_, vector<bool> bf_vec );
+
         int numElement;
         int bitsPerElement;
 
@@ -25,6 +27,10 @@ namespace BF {
     private:
         int numIndex;
         int size;
+    public:
+        const vector<bool> &getBfVec() const;
+
+    private:
         vector<bool> bf_vec;
 
         void makeBloomFilter();

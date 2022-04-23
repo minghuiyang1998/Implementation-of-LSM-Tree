@@ -6,11 +6,11 @@
 
 class Metadata {
 private:
-    int bf_numElement;
-    int bf_bitsPerElement;
+    int bf_numElement = 1024;
+    int bf_bitsPerElement = 64;
     std::vector<bool> bf_vec;
-    int fp_min;
-    int fp_max;
+    int fp_min = INT32_MAX;
+    int fp_max = INT32_MIN;
     std::string filePath;
     int level;
     int size;

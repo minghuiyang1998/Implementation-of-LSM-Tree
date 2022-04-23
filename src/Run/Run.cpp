@@ -48,18 +48,6 @@ void Run::setFilePath(const string &filePath) {
     Run::filePath = filePath;
 }
 
-Run::Run(int size, int level, std::string filePath, const std::map<int, Value>& map) {
-    this->size = size;
-    this->level = level;
-    this->filePath = filePath;
-    bloomFilter = BF::BloomFilter(1024, 64); // numElement: 1024,  bitsPerElement: 64
-    for (const auto& element : map) {
-        std::string key = to_string(element.first);
-        bloomFilter.program(key);   // seems to have some bugs here
-        fencePointer.program(element.first);
-    }
-}
-
 bool Run::parsebool(std::string str) {
     if(str == "true") return true;
     else return false;
@@ -122,12 +110,59 @@ void Run::setLevel(int level) {
     Run::level = level;
 }
 
+/**
+ * recover from SST
+ * */
+Run::Run(Metadata metadata) {
+    this->size = metadata.getSize();
+    this->level = metadata.getLevel();
+    this->filePath = metadata.getFilePath();
+    bloomFilter = BF::BloomFilter(metadata.getBfNumElement(), metadata.getBfBitsPerElement(), metadata.getBfVec());
+    fencePointer = FencePointer(metadata.getFpMin(), metadata.getFpMax());
+    this->num_zones = num_zones;
+    this->num_elements_per_zone = num_elements_per_zone;
+    this->zones = zones;
+}
+
+/**
+ * new Run, init from data and metadata
+ * db will get a new metadata later
+ * */
 Run::Run(Metadata metadata, const map<int, Value> &map) {
-    
+    this->size = metadata.getSize();
+    this->level = metadata.getLevel();
+    this->filePath = metadata.getFilePath();
+    int bf_numElement = metadata.getBfNumElement();
+    int bf_bitPerElement = metadata.getBfBitsPerElement();
+
+    // new BF & FP
+    bloomFilter = BF::BloomFilter(bf_numElement, bf_bitPerElement); // default numElement: 1024,  bitsPerElement: 64
+    for (const auto& element : map) {
+        std::string key = to_string(element.first);
+        bloomFilter.program(key);
+        fencePointer.program(element.first);
+    }
+
+    // zones
+    this->num_zones = metadata.getNumZones();
+    this->num_elements_per_zone = metadata.getNumElementsPerZone();
+    zones = metadata.getZones();
 }
 
 Metadata Run::getInfo() {
-    Metadata info;
+    Metadata info(
+            bloomFilter.numElement,
+            bloomFilter.bitsPerElement,
+            bloomFilter.getBfVec(),
+            fencePointer.getMin(),
+            fencePointer.getMax(),
+            filePath,
+            level,
+            size,
+            num_zones,
+            num_elements_per_zone,
+            zones
+            );
 
     return info;
 }

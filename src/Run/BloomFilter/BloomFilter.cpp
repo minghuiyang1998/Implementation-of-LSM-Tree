@@ -35,6 +35,18 @@ BloomFilter::BloomFilter( int numElement_, int bitsPerElement_ ){
 	makeBloomFilter();
 }
 
+/**
+ * recover from SST
+ * */
+BloomFilter::BloomFilter( int numElement_, int bitsPerElement_, vector<bool> bf_vec ) {
+    this->bf_vec = bf_vec;
+    this->numIndex = numElement_;
+    this->bitsPerElement = bitsPerElement_;
+    // TODO: store
+    numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
+    size = numElement * bitsPerElement
+}
+
 // Initialize bloom filter, set size and all bits to 0
 void BloomFilter::makeBloomFilter(){
 	bf_vec.resize(size, 0);
@@ -87,4 +99,8 @@ int BloomFilter::getIndexNum(){
 
 int BloomFilter::getSize(){
 	return size;
+}
+
+const vector<bool> &BloomFilter::getBfVec() const {
+    return bf_vec;
 }

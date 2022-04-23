@@ -31,8 +31,8 @@ private:
     bool isInFencePointer(int key);
     bool parsebool(std::string str);
 public:
-    Run(int size, int level, std::string filePath, const std::map<int, Value>& map);
     Run(Metadata metadata, const std::map<int, Value>& map);
+    Run(Metadata metadata);
     Metadata getInfo();
     Value query(int key);
     std::vector<Value> range_query(int min_key, int max_key);
