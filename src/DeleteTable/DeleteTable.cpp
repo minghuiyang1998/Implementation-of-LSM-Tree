@@ -43,3 +43,5 @@ std::map<int, bool> DeleteTable::filterRangeQuery(std::map<int, Value> keyValues
 DeleteTable::DeleteTable(const std::vector<Record> &records) {
     this->records = records;
 }
+
+DeleteTable::DeleteTable() {}
