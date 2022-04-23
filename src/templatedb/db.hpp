@@ -80,10 +80,10 @@ private:
     int firstLevelThreshold;
     int mmtableThreshold;
 
-    std::vector<std::string> get_file_list(const std::string& dirname);
+    std::vector<std::string> get_run_dir_list(const std::string& dirname);
     void create_config_file(const std::string & fpath, const std::string & data_dirname) const;
     std::string create_data_dir();
-    bool load_data_file(const std::string & dirpath, const pair<int, int> &pair);
+//    bool load_data_file(const std::string & dirpath, const Metadata & metadata);
     Metadata load_metadata(const std::string & fpath);
     void write_files(const Metadata& metadata, const std::map<int, Value>& data, const std::string& run_dir_path);
     void create_run_dir(const std::string& run_dir_path);

@@ -6,7 +6,7 @@
 
 class Level {
 private: 
-    int levelNum;
+    int levelNum;    // the levelNum of first level is 0
     int threshold;
     std::vector<Run> runs;
 public:

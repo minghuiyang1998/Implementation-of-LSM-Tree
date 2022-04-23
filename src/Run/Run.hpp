@@ -26,6 +26,7 @@ private:
     int num_zones;             // TODO: config
     int num_elements_per_zone; // TODO: config
     std::vector<Zone> zones;
+
     bool isInBloomFilter(int key);
     bool isInFencePointer(int key);
     bool parsebool(std::string str);
@@ -40,7 +41,6 @@ public:
     int getSize() const;
     void setLevel(int level);
     void setFilePath(const string &filePath);
-    Metadata getInfo();
 };
 
 #endif /* LSM_TREE_SST_H */
