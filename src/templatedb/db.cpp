@@ -676,4 +676,8 @@ void DB::compactTiering(Run run) {
     }
 }
 
+int DB::size() {
+    return memoryTable.getMapSize();
+}
+
 

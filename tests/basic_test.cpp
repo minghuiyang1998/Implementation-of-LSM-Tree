@@ -20,7 +20,10 @@ protected:
 
     void SetUp() override 
     {
-        // TODO: each db should have a config.txt
+        db0.open("basic_test_db0.txt");
+        db1.open("basic_test_db1.txt");
+        db2.open("basic_test_db2.txt");
+
         db1.put(2, v1);
         db1.put(5, v2);
         db2.put(1024, v3);

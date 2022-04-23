@@ -54,6 +54,8 @@ public:
     void del(int min_key, int max_key);
     void compactLeveling(Run run);
     void compactTiering(Run run);
+
+    int size();
     
     db_status open(const std::string & fname);
     bool close();
