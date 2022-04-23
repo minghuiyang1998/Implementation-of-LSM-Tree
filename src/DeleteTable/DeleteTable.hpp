@@ -20,6 +20,9 @@ public:
      */
     bool filterSingleQuery(int key, Value val);
 
+    DeleteTable();
+    DeleteTable(const std::vector<Record> &records);
+
     /**
      * return a same size vector of keys
      * if true, key is legal
