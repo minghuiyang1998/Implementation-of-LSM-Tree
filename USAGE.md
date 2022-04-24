@@ -9,11 +9,17 @@ run "main()" in test
 dim: the dimension is the length of "items" of "Value".
 1. generate datafile with "tools/gen_data.py"
 ```bash
-gen_workload.py <rows> <dim_per_value> <max_key> <folder>
+gen_data.py <rows> <dim_per_value> <folder>
+exp:
+cd tools/
+python gen_data.py 50 3 ../data
 ```
 2. generate datafile with "tools/gen_workload.py"
 ```bash
 gen_workload.py <rows> <dim_per_value> <max_key> <folder>
+exp:
+cd tools/
+python gen_workload.py 50 3 200 ../data
 ```
 3. run main() with configuration
 <dbname> -f <datafilename> -w <workloadfilename>
