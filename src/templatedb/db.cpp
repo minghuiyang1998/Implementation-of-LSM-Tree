@@ -66,6 +66,7 @@ void DB::put(int key, Value val) {
         Metadata metadata(run_dir_path, level, size);
         vector<Zone> zones = create_zones(data, metadata);
         metadata.setZones(zones);
+        metadata.setNumZones(zones.size());
         Run newRun = Run(metadata, data);
 
         metadata = newRun.getInfo(); // return Metadata with complete Run info Done
@@ -572,6 +573,7 @@ bool DB::close()
         Metadata metadata(run_dir_path, level, size);
         vector<Zone> zones = create_zones(data, metadata);
         metadata.setZones(zones);
+        metadata.setNumZones(zones.size());
         Run newRun = Run(metadata, data);
         metadata = newRun.getInfo();
         write_files(metadata, data, run_dir_path);
@@ -639,6 +641,7 @@ void DB::compactLeveling(Run r) {
         Metadata metadata(run_dir_path, r_level, r_size);
         vector<Zone> zones = create_zones(res, metadata);
         metadata.setZones(zones);
+        metadata.setNumZones(zones.size());
         Run newRun = Run(metadata, res);
         metadata = newRun.getInfo();
         write_files(metadata, res, run_dir_path);
@@ -700,6 +703,7 @@ void DB::compactTiering(Run run) {
         Metadata metadata(run_dir_path, r_level, r_size);
         vector<Zone> zones = create_zones(res, metadata);
         metadata.setZones(zones);
+        metadata.setNumZones(zones.size());
         Run newRun = Run(metadata, res);
 
         metadata = newRun.getInfo();
