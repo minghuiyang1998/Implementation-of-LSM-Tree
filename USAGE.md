@@ -16,4 +16,5 @@ gen_workload.py <rows> <dim_per_value> <max_key> <folder>
 gen_workload.py <rows> <dim_per_value> <max_key> <folder>
 ```
 3. run main() with configuration
-    <dbname> -f <datafilename> -w <workloadfilename>
+<dbname> -f <datafilename> -w <workloadfilename>
+exp: benchmark_db.txt -f test_100_2.data -w test_25_2_200.wl
