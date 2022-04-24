@@ -16,7 +16,11 @@ protected:
     Value v2 = Value({6, 10});
     Value v3 = Value({1, 1, 5, 7});
     Value v4 = Value({13, 176});
-
+    Value v5 = Value({3, 76});
+    Value v6 = Value({4, 16});
+    Value v7 = Value({4, 176});
+    Value v8 = Value({5, 6});
+    Value v9 = Value({2, 17});
 };
 
 
@@ -88,6 +92,33 @@ TEST_F(DBTest, ScanFunctionality)
     db1.close();
     db2.close();
 }
+
+TEST_F(DBTest, RangeDeleteFunctionality)
+{
+    db0.open("basic_test_db0.txt");
+    db0.put(10, v5);
+    db0.put(1, v6);
+    db0.put(2, v7);
+    db0.put(3, v8);
+    db0.put(4, v9);
+    std::vector<Value> vals;
+    vals = db0.scan();
+    ASSERT_EQ(vals.size(), 5);
+
+    db0.del(2);
+    EXPECT_EQ(db0.get(2), Value(false));
+    vals = db0.scan();
+    ASSERT_EQ(vals.size(), 4);
+
+    Value get_value = db0.get(10);
+    EXPECT_EQ(DBTest::v5, get_value);
+
+    db0.del(2, 6);
+    vals = db0.scan();
+    ASSERT_EQ(vals.size(), 2);
+    db0.close();
+}
+
 
 
 int main(int argc, char **argv)
