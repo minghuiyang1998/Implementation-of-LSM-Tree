@@ -4,13 +4,13 @@ using namespace templatedb;
 
 Operation::Operation(std::string op_string, int _key, std::vector<int> & _args)
 {
-    if (op_string == "I")
+    if (op_string == "PUT")
         type = PUT;
-    else if (op_string == "Q")
+    else if (op_string == "GET")
         type = GET;
-    else if (op_string == "S")
+    else if (op_string == "SCAN")
         type = SCAN;
-    else if (op_string == "D")
+    else if (op_string == "DELETE")
         type = DELETE;
     else
         type = NO_OP;

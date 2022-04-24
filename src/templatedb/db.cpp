@@ -776,13 +776,10 @@ bool DB::load_benchmark_test_data_file(std::string & fname) {
             std::stringstream linestream(line);
             std::string item;
 
-            std::getline(linestream, item, ' ');
-            std::string op_code = item;
-
-            std::getline(linestream, item, ' ');
+            std::getline(linestream, item, ',');
             key = stoi(item);
             std::vector<int> items;
-            while(std::getline(linestream, item, ' '))
+            while(std::getline(linestream, item, ','))
             {
                 items.push_back(stoi(item));
             }
