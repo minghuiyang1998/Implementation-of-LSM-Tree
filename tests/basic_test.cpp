@@ -73,7 +73,7 @@ TEST_F(DBTest, DeleteFunctionality)
     db2.open("basic_test_db2.txt");
     db2.del(1024);
     EXPECT_EQ(db2.get(1024), Value(false));
-    EXPECT_EQ(db2.size(), 0);
+    EXPECT_EQ(db2.size(), 1);
     db1.close();
     db2.close();
 }
