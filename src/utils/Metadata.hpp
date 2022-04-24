@@ -15,7 +15,7 @@ private:
     int level;   // the number of first level is 0
     int size;   // the size of the run
     int num_zones;
-    int num_elements_per_zone = 2;
+    int num_elements_per_zone = 10;
     std::vector<Zone> zones;
 public:
     int getBfNumElement() const {

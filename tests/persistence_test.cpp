@@ -12,20 +12,26 @@ TEST(PersistenceTest, BasicOpenClose)
     templatedb::DB db;
     Value v1({1, 2});
     Value v2({2,3,4});
+    Value v3({6,7});
     db.open(fname);
     db.put(5, v1);
     db.put(3, v1);
     db.put(10, v2);
     db.put(15, v1);
+    db.put(18, v3);
     db.close();
 
     db.open(fname);
     Value v_get1 = db.get(5);
     Value v_get2 = db.get(10);
+    Value v_get3 = db.get(15);
+    Value v_get4 = db.get(18);
     db.close();
     remove(fname.c_str());
     ASSERT_EQ(v1, v_get1);
     ASSERT_EQ(v2, v_get2);
+    ASSERT_EQ(v1, v_get3);
+    ASSERT_EQ(v3, v_get4);
 }
 
 TEST(PersistenceTest, DeleteOpenClose)
