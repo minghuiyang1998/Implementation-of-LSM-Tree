@@ -1,8 +1,0 @@
-0  // current total levels
-3  // threshold for the first level
-0  // threshold for the mmtable
-Tiering  // compaction type
-1       // generator counter
-0       // timestamp
-HYXIFWTDXJ // data files directory
-
