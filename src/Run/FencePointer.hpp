@@ -1,3 +1,6 @@
+#ifndef RUN_FP_HPP
+#define RUN_FP_HPP
+
 #include <string>
 #include<algorithm>
 
@@ -33,3 +36,4 @@ private:
     int min;
     int max;
 };
+#endif //RUN_FP_HPP

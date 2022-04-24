@@ -44,7 +44,7 @@ BloomFilter::BloomFilter( int numElement_, int bitsPerElement_, vector<bool> bf_
     this->bitsPerElement = bitsPerElement_;
     // TODO: store
     numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
-    size = numElement * bitsPerElement
+    size = numElement * bitsPerElement;
 }
 
 // Initialize bloom filter, set size and all bits to 0
