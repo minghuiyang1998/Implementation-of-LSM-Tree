@@ -40,7 +40,7 @@ BloomFilter::BloomFilter( int numElement_, int bitsPerElement_ ){
  * */
 BloomFilter::BloomFilter( int numElement_, int bitsPerElement_, vector<bool> bf_vec ) {
     this->bf_vec = bf_vec;
-    this->numIndex = numElement_;
+    this->numElement = numElement_;
     this->bitsPerElement = bitsPerElement_;
     // TODO: store
     numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
