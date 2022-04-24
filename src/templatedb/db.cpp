@@ -206,9 +206,46 @@ void DB::construct_database() {
 // used in basic_test.cpp
 std::vector<Value> DB::scan() {
     std::vector<Value> return_vector;
-    for (const auto& pair: memoryTable.getMap()) {
-        return_vector.push_back(pair.second);
+    std::map<int, Value> return_map;
+
+    // 1. search in levels
+    for (int i = 1; i <= totalLevels; ++i) {
+        Level &level = levels.getLevelVector(i);
+        // get all runs in this level
+        // search table in this level from new to old,
+        for (int j = level.size() - 1; j >= 0; j--) {
+            Run &run = level.getARun(j);
+            int min_key = run.getMin();
+            int max_key = run.getMax();
+            std::map<int, Value> result = run.range_query(min_key, max_key);
+            for (const auto& r : result) {
+                int key = r.first;
+                Value val = r.second;
+                // make sure the new one will not be overridden by old one
+                if (return_map.count(key) == 0) {
+                    return_map[key] = val;
+                }
+            }
+        }
     }
+
+    // 2. all in memorytable
+    for (const auto& pair: memoryTable.getMap()) {
+        int key = pair.first;
+        Value val = pair.second;
+        return_map[key] = val;
+    }
+
+    // 3. filter all rangeDeleted and not visible
+    for (const auto& item : return_map) {
+        int key = item.first;
+        Value val = item.second;
+        bool isEligible = deleteTable.filterSingleQuery(key, val) && val.visible;
+        if (isEligible) {
+            return_vector.push_back(val);
+        }
+    }
+
     return return_vector;
 }
 

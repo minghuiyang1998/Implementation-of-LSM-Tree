@@ -41,6 +41,9 @@ public:
     int getSize() const;
     void setLevel(int level);
     Metadata getInfo();
+
+    int getMin() const;
+    int getMax() const;
 };
 
 #endif /* LSM_TREE_SST_H */
