@@ -1,3 +1,6 @@
+#ifndef LSM_TREE_BF_H
+#define LSM_TREE_BF_H
+
 #include <vector>
 #include <string>
 #include <math.h>
@@ -25,3 +28,5 @@ namespace BF {
         void getIndex(string key, vector<int> *index);
     };
 }
+
+#endif /* LSM_TREE_BF_H */
