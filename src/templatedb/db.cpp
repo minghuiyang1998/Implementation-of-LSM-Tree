@@ -600,7 +600,7 @@ bool DB::close()
 void DB::compactLeveling(Run r) {
     Run run = r;
     // always start from level 1
-    int curr = 1;
+    int curr = 0;
     // initial
     if (levels.getTotalSize() == 0) {
         levels.addALevel();
@@ -660,7 +660,7 @@ void DB::compactLeveling(Run r) {
 }
 
 void DB::compactTiering(Run run) {
-    int curr = 1;
+    int curr = 0;
     // initial
     if (levels.getTotalSize() == 0) {
         levels.addALevel();
