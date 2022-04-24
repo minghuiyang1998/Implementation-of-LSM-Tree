@@ -62,7 +62,7 @@ std::map<int, Value> Run::range_query(int min_key, int max_key) {
     return results;
 }
 
-// TODO: change to read in block Done
+// change to read in block
 std::map<int, Value> Run::readDisk(long start_pos, long end_pos) {
     std::string run_data_path = this->filePath + "/data";
     std::ifstream fid(run_data_path, ios::binary);

@@ -12,7 +12,6 @@ Value DB::get(int key) {
     Value res = memoryTable.query(key);
     // if the res doesn't have a timestamp => doesn't find the key
     // if return Value(false) the timestamp will be -1
-    // could use visible false to judge because a valid tombstone's visible is false
     if (res.timestamp != -1) {
         // include this key
         // did not deleted by single delete or range delete
@@ -39,6 +38,9 @@ Value DB::get(int key) {
                 bool isEligible = deleteTable.filterSingleQuery(key, res) && res.visible;
                 if (isEligible) {
                     return res;
+                } else {
+                    // include this key but deleted, There is no need to look in old files
+                    return Value(false);
                 }
             }
         }
@@ -49,7 +51,7 @@ Value DB::get(int key) {
 
 void DB::put(int key, Value val) {
     // fulfill all the attributes in val
-    val.setTimestamp(timestamp + 1);
+    val.setTimestamp(timestamp);
     timestamp += 1;
     // 1. put in memory table
     memoryTable.put(key, val);
@@ -61,13 +63,12 @@ void DB::put(int key, Value val) {
         int level = 0;
         std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
 
-        // TODO: create zones Done
         Metadata metadata(run_dir_path, level, size);
         vector<Zone> zones = create_zones(data, metadata);
         metadata.setZones(zones);
         Run newRun = Run(metadata, data);
 
-        metadata = newRun.getInfo(); // TODO: return Metadata Done
+        metadata = newRun.getInfo(); // return Metadata with complete Run info Done
         write_files(metadata, data, run_dir_path);
 
         // add new run to level
@@ -601,7 +602,7 @@ void DB::compactLeveling(Run r) {
     // initial
     if (levels.getTotalSize() == 0) {
         levels.addALevel();
-        this->totalLevels++;
+        this->totalLevels += 1;
     }
     while (true) {
         // get current level
@@ -658,7 +659,10 @@ void DB::compactLeveling(Run r) {
 void DB::compactTiering(Run run) {
     int curr = 1;
     // initial
-    if (levels.getTotalSize() == 0) levels.addALevel();
+    if (levels.getTotalSize() == 0) {
+        levels.addALevel();
+        this->totalLevels += 1;
+    }
     Level &curr_level = levels.getLevelVector(curr);
     curr_level.addARun(run);
     while (curr_level.size() > curr_level.getThreshold()) {
@@ -687,6 +691,7 @@ void DB::compactTiering(Run run) {
         // add to next level
         // 1. add a new level
         levels.addALevel();
+        this->totalLevels += 1;
         // 2. generate new File
         int r_level = curr + 1;
         int r_size = res.size();
