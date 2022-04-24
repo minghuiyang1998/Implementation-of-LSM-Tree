@@ -45,7 +45,7 @@ std::map<int, Value> Run::range_query(int min_key, int max_key) {
     std::map<int, Value> blocks;
     for (const auto& zone : zones) {
         // read block, if overlap
-        if (max_key < zone.getMin() && zone.getMax() < min_key) continue;
+        if (max_key < zone.getMin() || zone.getMax() < min_key) continue;
         long start_pos = zone.getStartPos();
         long end_pos = zone.getEndPos();
         std::map<int, Value> map = readDisk(start_pos, end_pos);;
