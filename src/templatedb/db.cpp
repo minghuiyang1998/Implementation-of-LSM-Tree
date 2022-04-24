@@ -86,7 +86,7 @@ std::vector<Value> DB::scan(int min_key, int max_key) {
     std::map<int, Value> return_map;
 
     // 1. search in levels
-    for (int i = 1; i <= totalLevels; ++i) {
+    for (int i = 0; i < totalLevels; ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search table in this level from new to old,
@@ -209,7 +209,7 @@ std::vector<Value> DB::scan() {
     std::map<int, Value> return_map;
 
     // 1. search in levels
-    for (int i = 1; i <= totalLevels; ++i) {
+    for (int i = 0; i < totalLevels; ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search table in this level from new to old,
