@@ -44,9 +44,9 @@ std::vector<Operation> Operation::ops_from_file(std::string file_name)
             args = std::vector<int>();
 
             std::stringstream linestream(line);
-            std::getline(linestream, op_string, ' '); // First line is an op_code
-            std::getline(linestream, key, ' '); // First argument is a key
-            while(std::getline(linestream, item, ' '))
+            std::getline(linestream, op_string, ','); // First line is an op_code
+            std::getline(linestream, key, ','); // First argument is a key
+            while(std::getline(linestream, item, ','))
             {
                 args.push_back(stoi(item));
             }
