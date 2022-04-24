@@ -65,7 +65,7 @@ public:
 
 private:
     const CompactionType DEFAULT_TYPE = Leveling;
-    const int firstLevelThreshold = 3;
+    int firstLevelThreshold = 3;
     const int DEFAULT_MMTABLE_THRESHOLD = 30;
     const std::string DEFAULT_PATH = "../../Storage";
 
