@@ -25,5 +25,5 @@ python gen_workload.py 50 3 200 ../data
 ```bash
 <dbname> -f <datafilename> -w <workloadfilename>
 open Run/Debug Configuration
-exp: benchmark_db.txt -f test_100_2.data -w test_25_2_200.wl
+exp: benchmark_db.txt -f ../../data/test_100_2.data -w ../../data/test_25_2_200.wl (relate to build/examples/simple_benchmark)
 ```
