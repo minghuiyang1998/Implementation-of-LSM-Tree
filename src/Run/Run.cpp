@@ -94,7 +94,7 @@ std::map<int, Value> Run::readDisk(long start_pos, long end_pos) {
             value.visible = visible;
             ret[key] = value;
 
-            if(current_byte >= end_pos) break;
+            if(current_byte > end_pos) break;
         }
     } else {
         fprintf(stderr, "Unable to read run file %s", run_data_path.c_str());
