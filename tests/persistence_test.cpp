@@ -8,7 +8,7 @@
 
 TEST(PersistenceTest, BasicOpenClose)
 {
-    std::string fname = "config.txt";
+    std::string fname = "config";
     templatedb::DB db;
     Value v1({1, 2});
     db.open(fname);
