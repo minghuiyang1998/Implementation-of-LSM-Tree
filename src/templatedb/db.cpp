@@ -25,7 +25,7 @@ Value DB::get(int key) {
         }
     }
     // 2. search in levels
-    for (int i = 0; i < totalLevels; ++i) {
+    for (int i = 0; i < levels.getTotalSize(); ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search table in level from new to old
@@ -55,7 +55,7 @@ void DB::put(int key, Value val) {
     timestamp += 1;
     // 1. put in memory table
     memoryTable.put(key, val);
-    if(memoryTable.getMapSize() > mmtableThreshold) {
+    if(memoryTable.getMapSize() >= mmtableThreshold) {
         // 2. check if memory-table need to be cleaned
         std::map<int, Value> data = memoryTable.clear();
         // create new run and add to first level, create a new file
@@ -86,7 +86,7 @@ std::vector<Value> DB::scan(int min_key, int max_key) {
     std::map<int, Value> return_map;
 
     // 1. search in levels
-    for (int i = 0; i < totalLevels; ++i) {
+    for (int i = 0; i < levels.getTotalSize(); ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search table in this level from new to old,
@@ -142,7 +142,7 @@ void DB::construct_database() {
     // read total number of levels
     std::string readLine;
     std::getline(file, readLine); // First line: total no. of levels
-    this->totalLevels = stoi(readLine);
+    int totalLevels = stoi(readLine);
     this->levels = Levels(this->firstLevelThreshold);
 
     // read threshold for the first level
@@ -172,7 +172,7 @@ void DB::construct_database() {
 
     // construct all levels
     int levelThreshold = firstLevelThreshold;
-    for(int i = 0; i < this->totalLevels; i++) {
+    for(int i = 0; i < totalLevels; i++) {
         levels.addALevel();
     }
 
@@ -209,7 +209,7 @@ std::vector<Value> DB::scan() {
     std::map<int, Value> return_map;
 
     // 1. search in levels
-    for (int i = 0; i < totalLevels; ++i) {
+    for (int i = 0; i < levels.getTotalSize(); ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
         // search table in this level from new to old,
@@ -516,7 +516,8 @@ void DB::update_config_file() {
     std::ofstream file(fpath);
     std::string writeLine;
     // write total no. levels
-    writeLine = to_string(this->totalLevels);
+    int totalLevels = levels.getTotalSize();
+    writeLine = to_string(totalLevels);
     file << writeLine << endl;
     // write first level threshold
     writeLine = to_string(this->firstLevelThreshold);
@@ -647,7 +648,6 @@ void DB::compactLeveling(Run r) {
     // initial
     if (levels.getTotalSize() == 0) {
         levels.addALevel();
-        this->totalLevels += 1;
     }
     while (true) {
         // get current level
@@ -707,7 +707,6 @@ void DB::compactTiering(Run run) {
     // initial
     if (levels.getTotalSize() == 0) {
         levels.addALevel();
-        this->totalLevels += 1;
     }
     Level &curr_level = levels.getLevelVector(curr);
     curr_level.addARun(run);
@@ -737,7 +736,6 @@ void DB::compactTiering(Run run) {
         // add to next level
         // 1. add a new level
         levels.addALevel();
-        this->totalLevels += 1;
         // 2. generate new File
         int r_level = curr + 1;
         int r_size = res.size();
