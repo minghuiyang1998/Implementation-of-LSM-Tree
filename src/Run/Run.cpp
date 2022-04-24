@@ -205,5 +205,12 @@ std::map<int, Value> Run::readRun() {
     return ret;
 }
 
+int Run::getMin() const {
+    return fencePointer.getMin();
+}
+
+int Run::getMax() const {
+    return fencePointer.getMax();
+};
 
 
