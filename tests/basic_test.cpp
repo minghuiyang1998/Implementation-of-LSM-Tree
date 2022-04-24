@@ -84,16 +84,15 @@ TEST_F(DBTest, ScanFunctionality)
     db2.open("basic_test_db2.txt");
     std::vector<Value> vals;
     vals = db2.scan();
-    ASSERT_EQ(vals.size(), 1);
-    EXPECT_EQ(vals[0], DBTest::v3);
+    ASSERT_EQ(vals.size(), 0);
 
     db1.open("basic_test_db1.txt");
-    vals = db1.scan(1, 3);
+    vals = db1.scan(1, 5);
     ASSERT_EQ(vals.size(), 1);
     EXPECT_EQ(vals[0], DBTest::v1);
 
     vals = db1.scan();
-    ASSERT_EQ(vals.size(), 2);
+    ASSERT_EQ(vals.size(), 1);
     db1.close();
     db2.close();
 }
