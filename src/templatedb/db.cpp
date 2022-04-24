@@ -192,8 +192,14 @@ void DB::construct_database() {
  std::vector<std::string> DB::get_run_dir_list(const std::string& dirname) {
     std::string dirpath = DEFAULT_PATH + "/" + dirname;
     std::vector<std::string> res;
-    for (const auto & entry : std::__fs::filesystem::directory_iterator(dirpath))
+    for (const auto & entry : std::__fs::filesystem::directory_iterator(dirpath)){
+        std::string entryPath = entry.path();
+        if(entryPath == DEFAULT_PATH + "/" + data_files_dirname + "/delete_table")
+            continue;
         res.push_back(entry.path());
+    }
+
+
     return res;
  }
 
