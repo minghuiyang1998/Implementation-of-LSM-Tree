@@ -170,9 +170,9 @@ void DB::construct_database() {
     this->data_files_dirname = readLine;
 
     // construct all levels
+    int levelThreshold = firstLevelThreshold;
     for(int i = 0; i < this->totalLevels; i++) {
-        Level newLevel = Level(i, (i+1) * firstLevelThreshold);
-        this->levels.setLevel(i, newLevel);
+        levels.addALevel();
     }
 
     // read delete table
@@ -346,7 +346,7 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
     writeLine = "0";
     fd << writeLine << endl;
     // write first level threshold
-    writeLine = to_string(DEFAUlT_LEVEL_THRESHOLD);
+    writeLine = to_string(firstLevelThreshold);
     fd << writeLine << endl;
     // write mmtable threshold
     writeLine = to_string(DEFAULT_MMTABLE_THRESHOLD);
@@ -475,7 +475,7 @@ void DB::update_config_file() {
     writeLine = to_string(this->totalLevels);
     file << writeLine << endl;
     // write first level threshold
-    writeLine = to_string(this->DEFAUlT_LEVEL_THRESHOLD);
+    writeLine = to_string(this->firstLevelThreshold);
     file << writeLine << endl;
     // write level threshold
     writeLine = to_string(this->mmtableThreshold);

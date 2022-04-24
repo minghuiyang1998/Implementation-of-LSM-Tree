@@ -65,7 +65,7 @@ public:
 
 private:
     const CompactionType DEFAULT_TYPE = Leveling;
-    const int DEFAUlT_LEVEL_THRESHOLD = 3;
+    const int firstLevelThreshold = 3;
     const int DEFAULT_MMTABLE_THRESHOLD = 30;
     const std::string DEFAULT_PATH = "../../Storage";
 
@@ -81,7 +81,6 @@ private:
     int totalLevels;
     int generatorCount;
     int timestamp = 0;
-    int firstLevelThreshold;
     int mmtableThreshold;
 
     std::vector<std::string> get_run_dir_list(const std::string& dirname);
