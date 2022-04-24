@@ -125,7 +125,7 @@ Run::Run(Metadata metadata) {
     this->size = metadata.getSize();
     this->level = metadata.getLevel();
     this->filePath = metadata.getFilePath();
-    bloomFilter = BF::BloomFilter(metadata.getBfNumElement(), metadata.getBfBitsPerElement(), metadata.getBfVec());
+    bloomFilter = BF::BloomFilter(metadata.getBfNumElement(), metadata.getBfBitsPerElement(), metadata.getBfVec());;
     fencePointer = FencePointer(metadata.getFpMin(), metadata.getFpMax());
     this->num_zones = metadata.getNumZones();
     this->num_elements_per_zone = metadata.getNumElementsPerZone();

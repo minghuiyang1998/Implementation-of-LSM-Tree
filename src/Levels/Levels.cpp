@@ -27,7 +27,7 @@ int Levels::getTotalSize() const {
 void Levels::addALevel() {
     int newLevelNumb = levelVector.size();
     // T, T^2, T^3, T^4.....
-    int newThreshold = pow(firstLevelThreshold, newLevelNumb);
+    int newThreshold = pow(firstLevelThreshold, newLevelNumb+1);
     Level newLevel(newLevelNumb, newThreshold);
     levelVector.push_back(newLevel);
 }
