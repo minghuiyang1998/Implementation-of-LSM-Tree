@@ -696,7 +696,10 @@ void DB::compactLeveling(Run r) {
         } else {
             // level overflow, ready to write to next level
             run = curr_level.removeARun();
-            levels.addALevel();
+            // next level doesn't exist
+            if (curr + 1 >= levels.getTotalSize()) {
+                levels.addALevel();
+            }
         }
         curr += 1;
     }
@@ -734,8 +737,10 @@ void DB::compactTiering(Run run) {
         }
 
         // add to next level
-        // 1. add a new level
-        levels.addALevel();
+        // 1. add a new level, exp: curr 0, next 1, curr total: 1, next total: 2
+        if (curr + 2 >= levels.getTotalSize()) {
+            levels.addALevel();
+        }
         // 2. generate new File
         int r_level = curr + 1;
         int r_size = res.size();
