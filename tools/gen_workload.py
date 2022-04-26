@@ -4,18 +4,18 @@ import random
 import sys
 
 MAX_VALUE = 2**16 - 1
-OPERATIONS = ['I', 'Q', 'S', 'D']
+OPERATIONS = ['DELETE', 'SCAN', 'GET', 'PUT']
 
 
 def get_op(dims, key_max):
     op_code = random.choice(OPERATIONS)
     args = [random.choice(range(key_max))] # First arg is always a key
-    if (op_code == 'I'):
+    if (op_code == 'PUT'):
         args += random.sample(range(MAX_VALUE), dims)
-    elif (op_code == 'S'):
+    elif (op_code == 'SCAN'):
         args += [random.choice(range(key_max))]
         args.sort()
-    elif (op_code == 'D'):
+    elif (op_code == 'DELETE'):
         if (random.choice(range(key_max)) % 2 == 0):
             args += [random.choice(range(key_max))]
             args.sort()
@@ -34,7 +34,7 @@ def main(args):
     fname = '%s/test_%s_%s_%s.wl' % (folder, num_ops, dims, key_max)
 
     with open(fname, 'w') as fid:
-        writer = csv.writer(fid, delimiter=' ')
+        writer = csv.writer(fid, delimiter=',')
         writer.writerow([num_ops])
         for _ in range(num_ops):
             writer.writerow(get_op(dims, key_max))
