@@ -396,7 +396,7 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
     writeLine = to_string(DEFAULT_MMTABLE_THRESHOLD);
     fd << writeLine << endl;
     //write type;
-    writeLine = "Leveling";
+    writeLine = "Tiering";
     fd << writeLine << endl;
     // write timestamp and count
     writeLine = "0";
@@ -711,54 +711,57 @@ void DB::compactTiering(Run run) {
     if (levels.getTotalSize() == 0) {
         levels.addALevel();
     }
-    Level &curr_level = levels.getLevelVector(curr);
-    curr_level.addARun(run);
-    while (curr_level.size() > curr_level.getThreshold()) {
-        std::map<int, Value> res;
-        // from old to new, new run always inserted to the end of the level
-        for (int i = 0; i < curr_level.size(); i++) {
-            Run &curr = curr_level.getARun(i); // not delete at this time
-            std::map<int, Value> curr_map = curr.readRun();
-            for (const auto& element : curr_map) { // use new_data override prev_data
-                int key = element.first;
-                Value val = element.second;
-                // exist key, override directly
-                // exist: if it is tombstone: Pass it to the bottom and make sure everything before this time point is deleted
-                // no exist key, push
-                res[key] = val;
+    levels.getLevelVector(curr).addARun(run);
+    while (true) {
+        Level &curr_level = levels.getLevelVector(curr);
+        if (curr_level.size() > curr_level.getThreshold()) {
+            std::map<int, Value> res;
+            // from old to new, new run always inserted to the end of the level
+            for (int i = 0; i < curr_level.size(); i++) {
+                Run &curr = curr_level.getARun(i); // not delete at this time
+                std::map<int, Value> curr_map = curr.readRun();
+                for (const auto& element : curr_map) { // use new_data override prev_data
+                    int key = element.first;
+                    Value val = element.second;
+                    // exist key, override directly
+                    // exist: if it is tombstone: Pass it to the bottom and make sure everything before this time point is deleted
+                    // no exist key, push
+                    res[key] = val;
+                }
             }
+
+            // clean all after merge all sst in this level
+            std::vector<std::string> deleted_paths = curr_level.cleanAllRuns();
+            // delete all sst from disk
+            for(const std::string& s: deleted_paths) {
+                delete_dir(s);
+            }
+
+            // add to next level
+            // ensure we have next level
+            if (curr + 1 >= levels.getTotalSize()) {
+                levels.addALevel();
+            }
+            // 2. generate new File
+            int r_level = curr + 1;
+            int r_size = res.size();
+            std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+
+            Metadata metadata(run_dir_path, r_level, r_size);
+            vector<Zone> zones = create_zones(res, metadata);
+            metadata.setZones(zones);
+            metadata.setNumZones(zones.size());
+            Run newRun = Run(metadata, res);
+
+            metadata = newRun.getInfo();
+            write_files(metadata, res, run_dir_path);
+
+            levels.getLevelVector(r_level).addARun(newRun);
+            // move to next level
+            curr += 1;
+        } else {
+            break;
         }
-
-        // clean all after merge all sst in this level
-        std::vector<std::string> deleted_paths = curr_level.cleanAllRuns();
-        // delete all sst from disk
-        for(const std::string& s: deleted_paths) {
-            delete_dir(s);
-        }
-
-        // add to next level
-        // 1. add a new level, exp: curr 0, next 1, curr total: 1, next total: 2
-        if (curr + 2 >= levels.getTotalSize()) {
-            levels.addALevel();
-        }
-        // 2. generate new File
-        int r_level = curr + 1;
-        int r_size = res.size();
-        std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
-
-        Metadata metadata(run_dir_path, r_level, r_size);
-        vector<Zone> zones = create_zones(res, metadata);
-        metadata.setZones(zones);
-        metadata.setNumZones(zones.size());
-        Run newRun = Run(metadata, res);
-
-        metadata = newRun.getInfo();
-        write_files(metadata, res, run_dir_path);
-
-        levels.getLevelVector(r_level).addARun(newRun);
-        // move to next level
-        curr += 1;
-        curr_level = levels.getLevelVector(curr);
     }
 }
 
