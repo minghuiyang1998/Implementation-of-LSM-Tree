@@ -64,9 +64,10 @@ public:
     std::vector<Value> execute_op(Operation op);
 
 private:
-    const CompactionType DEFAULT_TYPE = Tiering;
+    CompactionType DEFAULT_TYPE = Leveling;
     int firstLevelThreshold = 300;
-    const int DEFAULT_MMTABLE_THRESHOLD = 3;
+    int DEFAULT_MMTABLE_THRESHOLD = 3;
+
     const std::string DEFAULT_PATH = "../../Storage";
 
     std::string data_files_dirname;

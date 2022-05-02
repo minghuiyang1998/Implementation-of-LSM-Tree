@@ -198,8 +198,6 @@ void DB::construct_database() {
             continue;
         res.push_back(entry.path());
     }
-
-
     return res;
  }
 
@@ -396,7 +394,10 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
     writeLine = to_string(DEFAULT_MMTABLE_THRESHOLD);
     fd << writeLine << endl;
     //write type;
-    writeLine = "Tiering";
+    if(DEFAULT_TYPE == Tiering)
+        writeLine = "Tiering";
+    else
+        writeLine = "Leveling";
     fd << writeLine << endl;
     // write timestamp and count
     writeLine = "0";
@@ -525,7 +526,7 @@ void DB::update_config_file() {
     // write level threshold
     writeLine = to_string(this->mmtableThreshold);
     file << writeLine << endl;
-    // leveling or tiering
+    // leveling or tiering;
     if(this->compactionType == Leveling) {
         writeLine = "Leveling";
     } else {
