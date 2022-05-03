@@ -144,7 +144,7 @@ Run::Run(Metadata metadata, const map<int, Value> &map) {
     int bf_bitPerElement = metadata.getBfBitsPerElement();
 
     // new BF & FP
-    bloomFilter = BF::BloomFilter(bf_numElement, bf_bitPerElement); // default numElement: 1024,  bitsPerElement: 64
+    bloomFilter = BF::BloomFilter(size, bf_bitPerElement); // default numElement: 1024,  bitsPerElement: 64
     for (const auto& element : map) {
         std::string key = to_string(element.first);
         bloomFilter.program(key);
