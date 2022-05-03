@@ -27,3 +27,10 @@ python gen_workload.py 50 3 200 ../data
 open Run/Debug Configuration
 exp: benchmark_db.txt -f ../../data/test_100_2.data -w ../../data/test_25_2_200.wl (relate to build/examples/simple_benchmark)
 ```
+
+4. Modify attributes value of the database
+Compaction type: db.hpp line67
+First level threshold: db.hpp line68
+Memory table maximum size: db.hpp line69
+Number of elements per zone: db.hpp line 18
+BF bits per element: Metadata.hpp line10

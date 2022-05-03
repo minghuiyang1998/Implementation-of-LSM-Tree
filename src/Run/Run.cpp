@@ -10,9 +10,10 @@ bool Run::isInFencePointer(int key) {
 
 Value Run::query(int key) {
     bool isInBF = isInBloomFilter(key); // false positive
+    if(!isInBF) return Value(false);
     bool isInFP = isInFencePointer(key);
     // not in bloom filter or fence pointer, definitely not in this run
-    if (!isInBF || !isInFP) return Value(false);
+    if (!isInFP) return Value(false);
 
     // Identify the parts that might contain data
     std::map<int, Value> blocks;

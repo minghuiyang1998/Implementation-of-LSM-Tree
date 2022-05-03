@@ -46,7 +46,8 @@ int main(int argc, char * argv[])
         fprintf(stderr, "Unable to load DB %s\n", cfg.dbname.c_str());
         exit(EXIT_FAILURE);
     }
-    
+
+    auto start = std::chrono::high_resolution_clock::now();
     if (!cfg.fname.empty())
     {
         if (!db.load_benchmark_test_data_file(cfg.fname))
@@ -60,7 +61,7 @@ int main(int argc, char * argv[])
 
     std::vector<templatedb::Operation> ops = templatedb::Operation::ops_from_file(cfg.wlname);
 
-    auto start = std::chrono::high_resolution_clock::now();
+
     for (auto op : ops)
     {
         db.execute_op(op);
