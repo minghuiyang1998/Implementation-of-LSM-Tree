@@ -83,9 +83,11 @@ void DB::put(int key, Value val) {
 
 std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
-    std::map<int, Value> return_map;
 
-    // 1. search in levels
+    // 1. memoryTable search (override duplicate keys with the newest value in memoryTable)
+    std::map<int, Value> return_map = memoryTable.range_query(min_key, max_key);
+
+    // 2. search in levels
     for (int i = 0; i < levels.getTotalSize(); ++i) {
         Level &level = levels.getLevelVector(i);
         // get all runs in this level
@@ -97,19 +99,12 @@ std::vector<Value> DB::scan(int min_key, int max_key) {
                 int key = r.first;
                 Value val = r.second;
                 // make sure the new one will not be overridden by old one
+                // Add only keys that do not exist in the map
                 if (return_map.count(key) == 0) {
                     return_map[key] = val;
                 }
             }
         }
-    }
-
-    // 2. memoryTable search (override duplicate keys with the newest value in memoryTable)
-    std::map<int, Value> memResult = memoryTable.range_query(min_key, max_key);
-    for (const auto& r : memResult) {
-        int key = r.first;
-        Value val = r.second;
-        return_map[key] = val;
     }
 
     // 3. filter all rangeDeleted and not visible

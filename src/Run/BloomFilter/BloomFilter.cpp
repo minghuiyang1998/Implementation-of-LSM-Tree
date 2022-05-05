@@ -27,7 +27,7 @@ BloomFilter::BloomFilter( int numElement_, int bitsPerElement_ ){
 
     // For small n, we can see a very high false positive rate.  Fix it
     // by enforcing a minimum bloom filter length.
-	bitsPerElement = bitsPerElement_ < 5 ? 5 : bitsPerElement_;
+	bitsPerElement = bitsPerElement_ < 1 ? 1 : bitsPerElement_;
 
 	numIndex = (int)floor(0.693*bitsPerElement+ 0.5); // refer to levelDB
 	size = numElement * bitsPerElement;
@@ -42,7 +42,6 @@ BloomFilter::BloomFilter( int numElement_, int bitsPerElement_, vector<bool> bf_
     this->bf_vec = bf_vec;
     this->numElement = numElement_;
     this->bitsPerElement = bitsPerElement_;
-    // TODO: store
     numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
     size = numElement * bitsPerElement;
 }

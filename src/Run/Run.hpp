@@ -23,8 +23,8 @@ private:
     std::string filePath;
     int level;
     int size;
-    int num_zones;             // TODO: config
-    int num_elements_per_zone; // TODO: config
+    int num_zones;
+    int num_elements_per_zone;
     std::vector<Zone> zones;
 
     bool isInBloomFilter(int key);
