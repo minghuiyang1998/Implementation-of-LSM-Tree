@@ -7,6 +7,50 @@
 
 using namespace templatedb;
 
+// ------------------------------------------------------------------------
+//  public function
+// ------------------------------------------------------------------------
+
+/** open a database
+ *  @param config filename
+ *  @return db_status
+ * */
+db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
+{
+    std::string fpath = this->DEFAULT_PATH + "/" + filename;
+    this->config_file_path = fpath;
+    this->file.open(fpath, std::ios::in | std::ios::out);
+    if (file.is_open())
+    {
+        this->status = OPEN;
+        // New file implies empty file
+        if (file.peek() == std::ifstream::traits_type::eof())
+            return this->status;
+
+        construct_database();
+    }
+    else if (!file) // File does not exist
+    {
+        std::string dirname = create_data_dir();
+        create_config_file(fpath, dirname);
+        this->file.open(fpath, std::ios::in | std::ios::out);
+        construct_database();
+
+        this->status = OPEN;
+    }
+    else
+    {
+        file.close();
+        this->status = ERROR_OPEN;
+    }
+
+    return this->status;
+}
+
+/** get Value with a key
+ *  @param int key
+ *  @return if found and Value is visible, return value, otherwise return Value(false)
+ * */
 Value DB::get(int key) {
     // 1. memoryTable search
     Value res = memoryTable.query(key);
@@ -49,6 +93,9 @@ Value DB::get(int key) {
     return Value(false);
 }
 
+/** put Value with a key
+ *  @param int key, Value val
+ * */
 void DB::put(int key, Value val) {
     // fulfill all the attributes in val
     val.setTimestamp(timestamp);
@@ -64,12 +111,16 @@ void DB::put(int key, Value val) {
         std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
 
         Metadata metadata(run_dir_path, level, size);
+        // generate zones and wrap up metadata
         vector<Zone> zones = create_zones(data, metadata);
         metadata.setZones(zones);
         metadata.setNumZones(zones.size());
+        // generate new run with data and metadata, the generator will fill out BloomFilter info and Fence Pointer info
         Run newRun = Run(metadata, data);
 
-        metadata = newRun.getInfo(); // return Metadata with complete Run info Done
+        // get completed metadata with BloomFilter info and FencePinter info
+        metadata = newRun.getInfo(); // return Metadata with complete Run info
+        // write to SST
         write_files(metadata, data, run_dir_path);
 
         // add new run to level
@@ -81,6 +132,10 @@ void DB::put(int key, Value val) {
     }
 }
 
+/** range query, scan Value whose key is between min_key and max_key
+ *  @param int min_key, int max_key
+ *  @return a vector contains all eligible values
+ * */
 std::vector<Value> DB::scan(int min_key, int max_key) {
     std::vector<Value> return_vector;
 
@@ -120,18 +175,68 @@ std::vector<Value> DB::scan(int min_key, int max_key) {
     return return_vector;
 }
 
+/** delete a key
+ *  @param int key
+ * */
 void DB::del(int key) {
     // create new value with visible = false
     Value val = Value(false);
     put(key, val);
 }
 
+/** range delete, delete Value whose key is between min_key and max_key
+ *  @param int min_key, int max_key
+ * */
 void DB::del(int min_key, int max_key) {
     Record record(min_key, max_key, timestamp);
     timestamp += 1;
     deleteTable.put(record);
 }
 
+/** close datablase
+ * @return bool close successfully or not
+ * */
+bool DB::close()
+{
+    // before close the database, clean the memory table, create a Run and store in a file. call clear()
+    map<int, Value> data = this->memoryTable.clear();
+    int size = data.size();
+    int level = 0;
+    std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
+
+    if (size > 0) {
+        Metadata metadata(run_dir_path, level, size);
+        vector<Zone> zones = create_zones(data, metadata);
+        metadata.setZones(zones);
+        metadata.setNumZones(zones.size());
+        Run newRun = Run(metadata, data);
+        metadata = newRun.getInfo();
+        write_files(metadata, data, run_dir_path);
+
+        // add new run to level
+        if(compactionType == Leveling) {
+            compactLeveling(newRun);
+        } else {
+            compactTiering(newRun);
+        }
+    }
+
+    if (file.is_open())
+    {
+        update_config_file();
+        file.close();
+    }
+    write_delete_table();
+    this->status = CLOSED;
+
+    return true;
+}
+
+// ------------------------------------------------------------------------
+//  private function
+// ------------------------------------------------------------------------
+
+/** construct a database*/
 void DB::construct_database() {
     // first read config.txt
     // read total number of levels
@@ -184,6 +289,7 @@ void DB::construct_database() {
     }
 }
 
+/** get run dir list from Storage */
  std::vector<std::string> DB::get_run_dir_list(const std::string& dirname) {
     std::string dirpath = DEFAULT_PATH + "/" + dirname;
     std::vector<std::string> res;
@@ -196,7 +302,7 @@ void DB::construct_database() {
     return res;
  }
 
-// used in basic_test.cpp
+/** Only used in basic_test.cpp. To check the number of visible records in the database*/
 std::vector<Value> DB::scan() {
     std::vector<Value> return_vector;
     std::map<int, Value> return_map;
@@ -242,88 +348,7 @@ std::vector<Value> DB::scan() {
     return return_vector;
 }
 
-// used in simple_benchmark.cpp
-std::vector<Value> DB::execute_op(Operation op)
-{
-    std::vector<Value> results;
-    if (op.type == GET)
-    {
-        results.push_back(this->get(op.key));
-    }
-    else if (op.type == PUT)
-    {
-        this->put(op.key, Value(op.args));
-    }
-    else if (op.type == SCAN)
-    {
-        results = this->scan(op.key, op.args[0]);
-    }
-    else if (op.type == DELETE)
-    {
-        if ( op.args.size()>0 ){
-            this->del(op.key, op.args[0]);
-        }
-        else
-            this->del(op.key);
-    }
-
-    return results;
-}
-
-Metadata DB::load_metadata(const std::string &fpath) {
-    std::ifstream fid(fpath);
-    if (fid.is_open()) {
-        std::string readLine;
-        std::getline(fid, readLine);
-        int bf_numElement = stoi(readLine);
-        std::getline(fid, readLine);
-        int bf_bitsPerElement = stoi(readLine);
-        std::getline(fid, readLine);
-        std::vector<bool> bf_vec;
-        for(char i : readLine) {
-            if(i == '0') {
-                bf_vec.push_back(false);
-            } else {
-                bf_vec.push_back(true);
-            }
-        }
-        std::getline(fid, readLine);
-        int fp_min = stoi(readLine);
-        std::getline(fid, readLine);
-        int fp_max = stoi(readLine);
-        std::getline(fid, readLine);
-        string filePath = readLine;
-        std::getline(fid, readLine);
-        int level = stoi(readLine);
-        std::getline(fid, readLine);
-        int size = stoi(readLine);
-        std::getline(fid, readLine);
-        int num_zones = stoi(readLine);
-        std::getline(fid, readLine);
-        int num_elements_per_zone = stoi(readLine);
-        std::vector<Zone> zones;
-        for(int i = 0 ; i < num_zones; i++) {
-            std::getline(fid, readLine);
-            std::stringstream line(readLine);
-            std::string str;
-            std::getline(line, str, ',');
-            int min = stoi(str);
-            std::getline(line, str, ',');
-            int max = stoi(str);
-            std::getline(line, str, ',');
-            int start_pos = stoi(str);
-            std::getline(line, str, ',');
-            int end_pos = stoi(str);
-            Zone zone(min, max, start_pos, end_pos);
-            zones.push_back(zone);
-        }
-        Metadata metadata(bf_numElement, bf_bitsPerElement, bf_vec, fp_min, fp_max,
-                          filePath, level, size, num_zones, num_elements_per_zone, zones);
-        return metadata;
-    }
-    Metadata metadata;
-    return metadata;
-}
+/** used in construct_database*/
 void DB::load_delete_table() {
     std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/delete_table";
     std::ifstream fid(filepath);
@@ -344,6 +369,7 @@ void DB::load_delete_table() {
     }
 }
 
+/** create zones*/
 std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata & metadata) {
     std::vector<Zone> zones;
     int byte_count = 0;
@@ -374,6 +400,7 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
     return zones;
 }
 
+/** create config file for database*/
 void DB::create_config_file(const std::string & fpath, const std::string & data_dirname) const {
     const std::string& config_filepath = fpath;
     std::ofstream fd(config_filepath);
@@ -404,6 +431,7 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
     fd.close();
 }
 
+/** write to SST*/
 void DB::write_files(const Metadata& metadata, const std::map<int, Value>& data, const std::string& run_dir_path) {
     create_run_dir(run_dir_path);
     generatorCount++;
@@ -411,10 +439,12 @@ void DB::write_files(const Metadata& metadata, const std::map<int, Value>& data,
     write_data(data, run_dir_path);
 }
 
+/**  create a dir for a Run*/
 void DB::create_run_dir(const std::string& run_dir_path) {
     std::__fs::filesystem::create_directories(run_dir_path);
 }
 
+/** write to a metadata file*/
 void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_path) {
     std::string filepath = run_dir_path + "/metadata";
     std::ofstream fd(filepath);
@@ -472,6 +502,7 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     fd.close();
 }
 
+/** write to a data file*/
 void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir_path) {
     std::string filepath = run_dir_path + "/data";
     std::ofstream fd(filepath, std::ios::binary);
@@ -490,6 +521,7 @@ void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir
     fd.close();
 }
 
+/** write to a deletetable file*/
 void DB::write_delete_table() {
     std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/delete_table";
     std::ofstream fd(filepath);
@@ -505,7 +537,7 @@ void DB::write_delete_table() {
     }
 }
 
-
+/** update config file for database*/
 void DB::update_config_file() {
     std::string fpath = this->config_file_path;
     delete_file(fpath);
@@ -539,45 +571,14 @@ void DB::update_config_file() {
     file << writeLine << endl;
 }
 
-db_status DB::open(const std::string & filename)    // open config.txt, set initial attributes
-{
-    std::string fpath = this->DEFAULT_PATH + "/" + filename;
-    this->config_file_path = fpath;
-    this->file.open(fpath, std::ios::in | std::ios::out);
-    if (file.is_open())
-    {
-        this->status = OPEN;
-        // New file implies empty file
-        if (file.peek() == std::ifstream::traits_type::eof())
-            return this->status;
-
-        construct_database();
-    }
-    else if (!file) // File does not exist
-    {
-        std::string dirname = create_data_dir();
-        create_config_file(fpath, dirname);
-        this->file.open(fpath, std::ios::in | std::ios::out);
-        construct_database();
-
-        this->status = OPEN;
-    }
-    else
-    {
-        file.close();
-        this->status = ERROR_OPEN;
-    }
-
-    return this->status; 
-}
-
-// TODO random generates fake random string, need to debug later Done
+/** random generates fake random string*/
 char random_generator() {
     static std::mt19937 generator(std::random_device{}());
     static std::uniform_int_distribution<std::size_t> distribution('A', 'Z');
     return static_cast<char>(distribution(generator));
 }
 
+/** generates name*/
 std::string generate_name() {
     std::string ret;
     for(int i = 0; i < 10; i++) {
@@ -586,6 +587,7 @@ std::string generate_name() {
     return ret;
 }
 
+/** create a dir for data*/
 std::string DB::create_data_dir() {
     data_files_dirname = generate_name();
     std::string data_files_path = DEFAULT_PATH + "/" + data_files_dirname;
@@ -593,50 +595,17 @@ std::string DB::create_data_dir() {
     return data_files_dirname;
 }
 
+/** delete a dir*/
 void DB::delete_dir(const std::string & dir_path) {
     std::__fs::filesystem::remove_all(dir_path);
 }
 
+/** delete a file*/
 void DB::delete_file(const std::string & file_path) {
     std::__fs::filesystem::remove(file_path);
 }
 
-bool DB::close()
-{
-    // before close the database, clean the memory table, create a Run and store in a file. call clear()
-    map<int, Value> data = this->memoryTable.clear();
-    int size = data.size();
-    int level = 0;
-    std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
-
-    if (size > 0) {
-        Metadata metadata(run_dir_path, level, size);
-        vector<Zone> zones = create_zones(data, metadata);
-        metadata.setZones(zones);
-        metadata.setNumZones(zones.size());
-        Run newRun = Run(metadata, data);
-        metadata = newRun.getInfo();
-        write_files(metadata, data, run_dir_path);
-
-        // add new run to level
-        if(compactionType == Leveling) {
-            compactLeveling(newRun);
-        } else {
-            compactTiering(newRun);
-        }
-    }
-
-    if (file.is_open())
-    {
-        update_config_file();
-        file.close();
-    }
-    write_delete_table();
-    this->status = CLOSED;
-
-    return true;
-}
-
+/** Leveling compaction*/
 void DB::compactLeveling(Run r) {
     Run run = r;
     // always start from level 1
@@ -701,6 +670,7 @@ void DB::compactLeveling(Run r) {
     }
 }
 
+/** Tiering compaction*/
 void DB::compactTiering(Run run) {
     int curr = 0;
     // initial
@@ -761,11 +731,95 @@ void DB::compactTiering(Run run) {
     }
 }
 
-int DB::size() {
-    return memoryTable.getMapSize();
+// ------------------------------------------------------------------------
+//  functions for tests
+// ------------------------------------------------------------------------
+
+/** used in simple_benchmark.cpp*/
+std::vector<Value> DB::execute_op(Operation op)
+{
+    std::vector<Value> results;
+    if (op.type == GET)
+    {
+        results.push_back(this->get(op.key));
+    }
+    else if (op.type == PUT)
+    {
+        this->put(op.key, Value(op.args));
+    }
+    else if (op.type == SCAN)
+    {
+        results = this->scan(op.key, op.args[0]);
+    }
+    else if (op.type == DELETE)
+    {
+        if ( op.args.size()>0 ){
+            this->del(op.key, op.args[0]);
+        }
+        else
+            this->del(op.key);
+    }
+
+    return results;
 }
 
+/** used in simple_benchmark.cpp*/
+Metadata DB::load_metadata(const std::string &fpath) {
+    std::ifstream fid(fpath);
+    if (fid.is_open()) {
+        std::string readLine;
+        std::getline(fid, readLine);
+        int bf_numElement = stoi(readLine);
+        std::getline(fid, readLine);
+        int bf_bitsPerElement = stoi(readLine);
+        std::getline(fid, readLine);
+        std::vector<bool> bf_vec;
+        for(char i : readLine) {
+            if(i == '0') {
+                bf_vec.push_back(false);
+            } else {
+                bf_vec.push_back(true);
+            }
+        }
+        std::getline(fid, readLine);
+        int fp_min = stoi(readLine);
+        std::getline(fid, readLine);
+        int fp_max = stoi(readLine);
+        std::getline(fid, readLine);
+        string filePath = readLine;
+        std::getline(fid, readLine);
+        int level = stoi(readLine);
+        std::getline(fid, readLine);
+        int size = stoi(readLine);
+        std::getline(fid, readLine);
+        int num_zones = stoi(readLine);
+        std::getline(fid, readLine);
+        int num_elements_per_zone = stoi(readLine);
+        std::vector<Zone> zones;
+        for(int i = 0 ; i < num_zones; i++) {
+            std::getline(fid, readLine);
+            std::stringstream line(readLine);
+            std::string str;
+            std::getline(line, str, ',');
+            int min = stoi(str);
+            std::getline(line, str, ',');
+            int max = stoi(str);
+            std::getline(line, str, ',');
+            int start_pos = stoi(str);
+            std::getline(line, str, ',');
+            int end_pos = stoi(str);
+            Zone zone(min, max, start_pos, end_pos);
+            zones.push_back(zone);
+        }
+        Metadata metadata(bf_numElement, bf_bitsPerElement, bf_vec, fp_min, fp_max,
+                          filePath, level, size, num_zones, num_elements_per_zone, zones);
+        return metadata;
+    }
+    Metadata metadata;
+    return metadata;
+}
 
+/** load benchmark test data file*/
 bool DB::load_benchmark_test_data_file(std::string & fname) {
     std::ifstream fid(fname);
     if (fid.is_open())
@@ -799,4 +853,7 @@ bool DB::load_benchmark_test_data_file(std::string & fname) {
     return true;
 }
 
-
+/** return map size*/
+int DB::size() {
+    return memoryTable.getMapSize();
+}
