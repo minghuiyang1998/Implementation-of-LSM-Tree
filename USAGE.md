@@ -43,3 +43,19 @@ For non-existing databases, the config file will be created based on the default
 - BloomFilter bits per element: src/utils/Metadata.hpp line10
 
 In this way, when it generates a new database that doesn't exist, the value you set will be used as the default parameter
+
+## Directory Description
+- src/
+- DeleteTable/: relate to Range Delete
+- Level/: includes operations in a Level, such as addARun, removeARun....
+- Levels/: includes operations of all Levels, such as addALevel..
+- MemoryTable/: includes operations of memorytable, such as put, get....
+- Run/: includes data structure: Fence Pointer, BloomFilter, Zone. Operations: Put, Get, Delete in a Run.
+- templetedb/: db.cpp is the database entry and includes all public APIs.
+- utils/: data structures used in databases, including Metadata and Value
+
+- data/: data and workload for benchmark test.
+- example/: benchmark_test and bloomfilter_test
+- Storage/: all databases and their files including config files and SSTs are stored here.
+- tests/: google test.
+- tools/: python files used to generate data and workload.
