@@ -54,6 +54,8 @@ In this way, when it generates a new database that doesn't exist, the value you 
 - templetedb/: db.cpp is the database entry and includes all public APIs.
 - utils/: data structures used in databases, including Metadata and Value
 
+
+- /
 - data/: data and workload for benchmark test.
 - example/: benchmark_test and bloomfilter_test
 - Storage/: all databases and their files including config files and SSTs are stored here.
