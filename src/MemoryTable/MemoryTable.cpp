@@ -15,9 +15,8 @@ std::map<int, Value> & MemoryTable::getMap() {
 }
 
 void MemoryTable::put(int key, Value value) {
-    // insert will not override
-    // old value will be override by new value in map
-//    this->map.insert(pair<int, Value>(key, value));
+    // insert will not override old value will be override by new value in map
+    // this->map.insert(pair<int, Value>(key, value));
     this->map[key] = value;
 }
 
