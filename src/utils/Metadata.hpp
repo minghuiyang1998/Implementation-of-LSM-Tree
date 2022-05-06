@@ -7,7 +7,7 @@
 class Metadata {
 private:
     int bf_numElement = 1024;
-    int bf_bitsPerElement = 64;
+    int bf_bitsPerElement = 10;
     std::vector<bool> bf_vec;
     int fp_min = INT32_MAX;
     int fp_max = INT32_MIN;

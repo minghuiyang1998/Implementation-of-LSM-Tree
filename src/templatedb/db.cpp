@@ -193,7 +193,7 @@ void DB::del(int min_key, int max_key) {
     deleteTable.put(record);
 }
 
-/** close datablase
+/** close database
  * @return bool close successfully or not
  * */
 bool DB::close()
@@ -205,13 +205,13 @@ bool DB::close()
     std::string run_dir_path = DEFAULT_PATH + "/" + data_files_dirname + "/" + to_string(generatorCount);
 
     if (size > 0) {
-        Metadata metadata(run_dir_path, level, size);
-        vector<Zone> zones = create_zones(data, metadata);
-        metadata.setZones(zones);
+        Metadata metadata(run_dir_path, level, size);  // initialize metadata
+        vector<Zone> zones = create_zones(data, metadata);     // create zones
+        metadata.setZones(zones);   // set zones in metadata
         metadata.setNumZones(zones.size());
-        Run newRun = Run(metadata, data);
-        metadata = newRun.getInfo();
-        write_files(metadata, data, run_dir_path);
+        Run newRun = Run(metadata, data);   // create a run, in the constructor, we generate BF and FP
+        metadata = newRun.getInfo();           // get the complete metadata
+        write_files(metadata, data, run_dir_path);    // write metadata and data into files
 
         // add new run to level
         if(compactionType == Leveling) {
@@ -223,10 +223,10 @@ bool DB::close()
 
     if (file.is_open())
     {
-        update_config_file();
+        update_config_file();     // update the config file(counter, level and timestamp)
         file.close();
     }
-    write_delete_table();
+    write_delete_table();         // update delete table
     this->status = CLOSED;
 
     return true;
@@ -236,7 +236,7 @@ bool DB::close()
 //  private function
 // ------------------------------------------------------------------------
 
-/** construct a database*/
+/** construct the structure of database in memory*/
 void DB::construct_database() {
     // first read config.txt
     // read total number of levels
@@ -284,12 +284,15 @@ void DB::construct_database() {
     for(const std::string& runPath: allRunDirPath) {
         Metadata metadata = load_metadata(runPath + "/metadata");
         Run newRun = Run(metadata);
-        Level &level = this->levels.getLevelVector(metadata.getLevel());  //TODO -1？
+        Level &level = this->levels.getLevelVector(metadata.getLevel());
         level.addARun(newRun);
     }
 }
 
-/** get run dir list from Storage */
+/** get all the run directories of a database
+ * @param dirname the directory name of the database
+ * @return all the names of run directories
+ **/
  std::vector<std::string> DB::get_run_dir_list(const std::string& dirname) {
     std::string dirpath = DEFAULT_PATH + "/" + dirname;
     std::vector<std::string> res;
@@ -348,7 +351,9 @@ std::vector<Value> DB::scan() {
     return return_vector;
 }
 
-/** used in construct_database*/
+/** used in construct_database
+ *  load the delete table from the file
+ **/
 void DB::load_delete_table() {
     std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/delete_table";
     std::ifstream fid(filepath);
@@ -369,17 +374,22 @@ void DB::load_delete_table() {
     }
 }
 
-/** create zones*/
+/** create zones
+ *  @param data the data that need to creat the zone
+ *  @param metadata the metadata
+ **/
 std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata & metadata) {
     std::vector<Zone> zones;
     int byte_count = 0;
     int min_key, max_key, min_byte, max_byte;
     int count = 0;
     for(const auto& iter: data) {
+        // record the value of min key and the lower bound of byte range
         if(count % metadata.getNumElementsPerZone() == 0) {
             min_key = iter.first;
             min_byte = byte_count;
         }
+        // record the value of max key and the higher bound of byte range
         if(count % metadata.getNumElementsPerZone() == metadata.getNumElementsPerZone()-1
         || count == data.size()-1) {
             max_key = iter.first;
@@ -387,6 +397,7 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
             Zone zone(min_key, max_key, min_byte, max_byte);
             zones.push_back(zone);
         }
+        // calculate the byte
         byte_count += sizeof(int); // bytes of key
         byte_count += sizeof(int); // bytes of size of items
         for(int i = 0; i < iter.second.items.size(); i++) {
@@ -400,7 +411,9 @@ std::vector<Zone> DB::create_zones(const std::map<int, Value> & data, Metadata &
     return zones;
 }
 
-/** create config file for database*/
+/** create config file for database
+ *  This function is called when opening a new database
+ **/
 void DB::create_config_file(const std::string & fpath, const std::string & data_dirname) const {
     const std::string& config_filepath = fpath;
     std::ofstream fd(config_filepath);
@@ -431,7 +444,9 @@ void DB::create_config_file(const std::string & fpath, const std::string & data_
     fd.close();
 }
 
-/** write to SST*/
+/** write to SST
+ *  first write metadata in a text file, and then write key value pairs in a binary file
+ * */
 void DB::write_files(const Metadata& metadata, const std::map<int, Value>& data, const std::string& run_dir_path) {
     create_run_dir(run_dir_path);
     generatorCount++;
@@ -439,12 +454,12 @@ void DB::write_files(const Metadata& metadata, const std::map<int, Value>& data,
     write_data(data, run_dir_path);
 }
 
-/**  create a dir for a Run*/
+/**  create a directory for a Run*/
 void DB::create_run_dir(const std::string& run_dir_path) {
     std::__fs::filesystem::create_directories(run_dir_path);
 }
 
-/** write to a metadata file*/
+/** create a metadata file and write metadata*/
 void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_path) {
     std::string filepath = run_dir_path + "/metadata";
     std::ofstream fd(filepath);
@@ -458,6 +473,7 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     writeLine = to_string(bf_bitsPerElement);
     fd << writeLine << endl;
 
+    // write bit vector
     writeLine = "";
     for(bool b: metadata.getBfVec()) {
         if(b) writeLine += "1";
@@ -465,6 +481,7 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     }
     fd << writeLine << endl;
 
+    // write fence pointer
     int fp_min = metadata.getFpMin();
     writeLine = to_string(fp_min);
     fd << writeLine << endl;
@@ -473,6 +490,7 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     writeLine = to_string(fp_max);
     fd << writeLine << endl;
 
+    // write file path
     writeLine = metadata.getFilePath();
     fd << writeLine << endl;
 
@@ -492,6 +510,7 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     writeLine = to_string(num_elements_per_zone);
     fd << writeLine << endl;
 
+    // write zones
     for(Zone z: metadata.getZones()) {
         writeLine = to_string(z.getMin())
                 + "," + to_string(z.getMax())
@@ -502,7 +521,10 @@ void DB::write_metadata(const Metadata& metadata, const std::string& run_dir_pat
     fd.close();
 }
 
-/** write to a data file*/
+/**
+ * write data to a data file
+ * write key value pairs in binary format
+ */
 void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir_path) {
     std::string filepath = run_dir_path + "/data";
     std::ofstream fd(filepath, std::ios::binary);
@@ -521,7 +543,11 @@ void DB::write_data(const std::map<int, Value>& data, const std::string& run_dir
     fd.close();
 }
 
-/** write to a deletetable file*/
+/**
+ * Write delete table to the delete table file
+ * This happens when closing the database
+ * The delete table is written in text file
+ */
 void DB::write_delete_table() {
     std::string filepath = DEFAULT_PATH + "/" + data_files_dirname + "/delete_table";
     std::ofstream fd(filepath);
@@ -537,7 +563,10 @@ void DB::write_delete_table() {
     }
 }
 
-/** update config file for database*/
+/**
+ * update config file for database
+ * This happens when closing the database
+ */
 void DB::update_config_file() {
     std::string fpath = this->config_file_path;
     delete_file(fpath);
@@ -571,14 +600,14 @@ void DB::update_config_file() {
     file << writeLine << endl;
 }
 
-/** random generates fake random string*/
+/** random generates a char in A-Z*/
 char random_generator() {
     static std::mt19937 generator(std::random_device{}());
     static std::uniform_int_distribution<std::size_t> distribution('A', 'Z');
     return static_cast<char>(distribution(generator));
 }
 
-/** generates name*/
+/** generates a random name for a database directory*/
 std::string generate_name() {
     std::string ret;
     for(int i = 0; i < 10; i++) {
@@ -587,7 +616,7 @@ std::string generate_name() {
     return ret;
 }
 
-/** create a dir for data*/
+/** create a directory for te database data*/
 std::string DB::create_data_dir() {
     data_files_dirname = generate_name();
     std::string data_files_path = DEFAULT_PATH + "/" + data_files_dirname;
@@ -595,7 +624,7 @@ std::string DB::create_data_dir() {
     return data_files_dirname;
 }
 
-/** delete a dir*/
+/** delete a directory*/
 void DB::delete_dir(const std::string & dir_path) {
     std::__fs::filesystem::remove_all(dir_path);
 }
@@ -763,7 +792,11 @@ std::vector<Value> DB::execute_op(Operation op)
     return results;
 }
 
-/** used in simple_benchmark.cpp*/
+/**
+ * Load metadata of a Run
+ * This happens after opening the database and need to load the metadata in memory
+ * Read as a text file
+ */
 Metadata DB::load_metadata(const std::string &fpath) {
     std::ifstream fid(fpath);
     if (fid.is_open()) {

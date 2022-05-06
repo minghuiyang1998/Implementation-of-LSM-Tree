@@ -8,6 +8,11 @@ bool Run::isInFencePointer(int key) {
     return fencePointer.query(key);
 }
 
+/**
+ * Do the point query in a run
+ * @param key the key for the query
+ * @return the value of the key
+ */
 Value Run::query(int key) {
     bool isInBF = isInBloomFilter(key); // false positive
     if(!isInBF) return Value(false);
@@ -35,6 +40,12 @@ Value Run::query(int key) {
     }
 }
 
+/**
+ * Do the range query in a run
+ * @param min_key
+ * @param max_key
+ * @return all the values of keys between min_key and max_key
+ */
 std::map<int, Value> Run::range_query(int min_key, int max_key) {
     int fp_min = fencePointer.getMin();
     int fp_max = fencePointer.getMax();
@@ -63,14 +74,21 @@ std::map<int, Value> Run::range_query(int min_key, int max_key) {
     return results;
 }
 
-// change to read in block
+/**
+ * Read a file block of the data file
+ * @param start_pos the block starting byte
+ * @param end_pos  the block ending byte
+ * @return all the data in this block, return as a map
+ */
 std::map<int, Value> Run::readDisk(long start_pos, long end_pos) {
     std::string run_data_path = this->filePath + "/data";
     std::ifstream fid(run_data_path, ios::binary);
     map<int, Value> ret;
     if(fid.is_open()) {
         long current_byte = start_pos;
+        // use seekg to directly read the file block
         fid.seekg(start_pos, ios::beg);
+        // read data from a binary file
         while(true) {
             int key;
             fid.read((char*)&key, sizeof(int)); // read key
@@ -176,6 +194,10 @@ Metadata Run::getInfo() {
     return info;
 }
 
+/**
+ * Read all the data in a run data file
+ * @return all the key value pairs in the data file
+ */
 std::map<int, Value> Run::readRun() {
     std::string run_data_path = this->filePath + "/data";
     std::ifstream fid(run_data_path, ios::binary);
