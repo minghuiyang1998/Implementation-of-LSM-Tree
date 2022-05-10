@@ -7,7 +7,7 @@
 
 class MemoryTable {
 private:
-    map<int, Value> map;
+    map<int, Value> memoMap;
 public:
     /**
      * return the map and then clear it
@@ -23,7 +23,7 @@ public:
     std::map<int, Value> range_query(int min_key, int max_key);
 
     int getMapSize() {
-        return map.size();
+        return memoMap.size();
     }
 
     std::map<int, Value> &getMap();
