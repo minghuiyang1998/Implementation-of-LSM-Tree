@@ -9,6 +9,22 @@ not extensive, rather it is meant to help guide you on what we expect when
 you implement the LSM tree. You can use this as base code or start from
 scratch.
 
+## Achievements
+
+(read ['final presentation'](https://github.com/minghuiyang1998/Implementation-of-LSM-Tree/blob/master/Presentation_Slides.pdf) for more details)
+
+1. LSM-Tree and database basic implementations: 
+   1. Zone(includes Fence Pointer), Run(includes metadata and data file paths), Level, MemoryTable, DeletedList(for RangeDelete)
+   2. Leveling and Tiering compaction strategies
+   3. Single Query, Range Query, Single Delete, Range Delete, Put
+   4. Extend basic_test: add tests for “RangeDelete”
+   5. Durable database and compatibility with multiple databases
+2. SST data file saved in binary format and read files in blocks
+3. Compatibility with multiple databases
+4. Perform basic functionality tests, durable tests and different experiments
+
+**The database can finish 3 million insertions and 3 million operations with data-dimension equals to 10 in 8864s (about 2.5h)**
+
 
 ## Requirements
 
