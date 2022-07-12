@@ -1,4 +1,4 @@
-c# CS 561: Data Systems Architecture - TemplateDB
+# CS 561: Data Systems Architecture - TemplateDB
 
 
 ## About
