@@ -43,7 +43,7 @@ cmake ..
 cmake --build .
 ```
 
-# Test
+## Test
 Tips: Read "README.md" and build the project first.
 ## persistence test - test persistence (gtest)
 /tests/persistence_test.cpp: run "main()" in test
