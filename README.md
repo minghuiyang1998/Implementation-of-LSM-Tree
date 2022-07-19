@@ -64,6 +64,7 @@ ctest
 
 Both the basic test and persistence test will go through.
 
+[More detailed usage](https://github.com/minghuiyang1998/Implementation-of-LSM-Tree/blob/master/USAGE.md)
 
 ## Building Workloads and Datasets
 
