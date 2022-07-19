@@ -45,13 +45,13 @@ cmake --build .
 
 ## Test
 Tips: Read "README.md" and build the project first.
-## persistence test - test persistence (gtest)
+### persistence test - test persistence (gtest)
 /tests/persistence_test.cpp: run "main()" in test
-## basic test - test basic operations in 3 dbs  (gtest)
+### basic test - test basic operations in 3 dbs  (gtest)
 /tests/basic_test.cpp: run "main()" in test
-## BloomFilter test - test bloom filter
+### BloomFilter test - test bloom filter
 /examples/bloom_test.cpp: run "main()" in test
-## simple benchmark - test workload time
+### simple benchmark - test workload time
 dim: the dimension is the length of "items" of "Value". Used to control per Value size.
 1. generate datafile with "tools/gen_data.py"
 ```bash
