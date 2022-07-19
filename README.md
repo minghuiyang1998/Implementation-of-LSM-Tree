@@ -98,8 +98,3 @@ OPERATOR KEY ARGS
 ```
 
 with the first line being the number of total operations.
-
-## Contact
-
-If you have any questions please feel free to see Ju Hyoung in office hours, or
-email me at jmun@bu.edu.
