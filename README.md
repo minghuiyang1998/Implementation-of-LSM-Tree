@@ -27,12 +27,9 @@ CSA machines)
     2. C++ Compiler
     3. GoogleTest (Auto compiled and fetched with CMake)
 
-
-
 ## Usage
 
 To compile, first create a build directory.
-
 
 ```bash
 mkdir build
@@ -41,61 +38,71 @@ cd build
 
 Afterwards, build using cmake.
 
-
 ```bash
 cmake ..
 cmake --build .
 ```
 
-An example executable should be located in the `build/example` folder. The
-benchmark simply takes in two files, a data file and a workload file and
-measures the time it takes to execute the workload over the dataset. Use the
-`-h` flag to see the proper syntax.
-
-Additionally we have provided some examples of unit test in C++ using gtest.
-This source is located in the `tests/basic_test.cpp`, whith the executable
-will be located in `build/tests` directory. We highly recommend when building
-your system to continue to expand on unit test. If you want to run all test,
-you may use the following command while you are in the build directory.
-
-```bash
-ctest
-```
-
-Both the basic test and persistence test will go through.
-
-[More detailed usage](https://github.com/minghuiyang1998/Implementation-of-LSM-Tree/blob/master/USAGE.md)
-
-## Building Workloads and Datasets
-
-In the `tools` folder we have included two scripts `gen_data.py` and
-`gen_workload.py`. They generate random datasets and workloads respectively.
-By default they have a maximum range of values that can be randomly
-generated, I assume everyone knows some python and can edit the scripts to
-increase the range if needed. Generate workloads and data with the following
-syntax
-
+# Test
+Tips: Read "README.md" and build the project first.
+## persistence test - test persistence (gtest)
+/tests/persistence_test.cpp: run "main()" in test
+## basic test - test basic operations in 3 dbs  (gtest)
+/tests/basic_test.cpp: run "main()" in test
+## BloomFilter test - test bloom filter
+/examples/bloom_test.cpp: run "main()" in test
+## simple benchmark - test workload time
+dim: the dimension is the length of "items" of "Value". Used to control per Value size.
+1. generate datafile with "tools/gen_data.py"
 ```bash
 gen_data.py <rows> <dim_per_value> <folder>
+exp:
+cd tools/
+python gen_data.py 50 3 ../data
+```
+2. generate datafile with "tools/gen_workload.py"
+```bash
 gen_workload.py <rows> <dim_per_value> <max_key> <folder>
+exp:
+cd tools/
+python gen_workload.py 50 3 200 ../data
+```
+3. run main() with configuration
+```bash
+<dbname> -f <datafilename> -w <workloadfilename>
+open Run/Debug Configuration
+exp: benchmark_db.txt -f ../../data/test_100_2.data -w ../../data/test_25_2_200.wl 
+(filepaths relate to build/examples/simple_benchmark)
 ```
 
-Data is generated with a space separating each item.
-First line indicates 
+4. Modify attributes value of the database (Tone your database in the test)
 
-```
-Number of Keys  Dimensions of each Object
-```
+Tips:
+Our parameter is hard coded in the code. So there 2 ways to tone the database. You can copy an existing config file in Storage/ and change the parameter in the config file. And then use this config file.
+For non-existing databases, the config file will be created based on the default values in the code. You could change the parameters in our code:
 
-Rest of lines follows the format of
-```
-OPERATOR KEY VALUE
-```
+- Compaction type: src/templatedb/db.hpp line67 (use Leveling/Tiering)
+- First level threshold. The threshold of a new level = firstLevelThreshold ^ (No. of current level + 1): src/templatedb/db.hpp line68
+- Memory table maximum size: src/templatedb/db.hpp line69
+- Number of elements per zone: src/utils/Metadata.hpp line 18
+- BloomFilter bits per element: src/utils/Metadata.hpp line10
 
-While workloads follow the format of 
+In this way, when it generates a new database that doesn't exist, the value you set will be used as the default parameter
 
-```
-OPERATOR KEY ARGS
-```
+## Directory Description
+- src/
+- DeleteTable/: relate to Range Delete
+- Level/: includes operations in a Level, such as addARun, removeARun....
+- Levels/: includes operations of all Levels, such as addALevel..
+- MemoryTable/: includes operations of memorytable, such as put, get....
+- Run/: includes data structure: Fence Pointer, BloomFilter, Zone. Operations: Put, Get, Delete in a Run.
+- templetedb/: db.cpp is the database entry and includes all public APIs.
+- utils/: data structures used in databases, including Metadata and Value
 
-with the first line being the number of total operations.
+
+- /
+- data/: data and workload for benchmark test.
+- example/: benchmark_test and bloomfilter_test
+- Storage/: all databases and their files including config files and SSTs are stored here.
+- tests/: google test.
+- tools/: python files used to generate data and workload.
